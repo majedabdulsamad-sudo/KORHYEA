@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1A4F7A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="KORHYEAN" />
+  <title>KORHYEAN — 나의 한국어 선생님</title>
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Apple touch icon (inline SVG as data URI for zero-file-count deploy) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%231A4F7A'/%3E%3Ctext x='90' y='120' font-size='90' text-anchor='middle'%3E🇰🇷%3C/text%3E%3C/svg%3E" />
+
+  <!-- React + ReactDOM from CDN (loaded before Babel so Babel can compile JSX) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel standalone to compile JSX in-browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, 'Segoe UI', sans-serif; background: #F4F5F7; overscroll-behavior: none; }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useRef } = React;
+
+
+const TABS = ["Home", "Flashcards", "B1", "B2", "Grammar", "Word", "Chat"];
+
+const WORD_OF_THE_DAY = [
+  { kr:"반갑습니다",rom:"bangapseumnida",en:"Nice to meet you",origin:"From 반갑다 (to be glad/pleased) — a pure native Korean word expressing genuine delight at meeting someone.",uses:["Formal first meeting","After an introduction","More heartfelt than 안녕하세요 alone"],examples:[{kr:"처음 뵙겠습니다. 반갑습니다!",rom:"Cheoeum boepgesseumnida. Bangapseumnida!",en:"Nice to meet you for the first time!"},{kr:"만나서 반갑습니다.",rom:"Mannaseo bangapseumnida.",en:"I'm glad to meet you."}],tip:"Koreans often say this right after their name and job title when being introduced. Replying with the same phrase is perfectly natural."},
+  { kr:"괜찮아요",rom:"gwaenchanayo",en:"It's okay / I'm fine / No worries",origin:"From 괜찮다 — believed to derive from 공연히 찮다. Now universally used to express that something is acceptable or fine.",uses:["Declining an offer politely","Reassuring someone","Saying you're okay after a mishap"],examples:[{kr:"도와드릴까요? 아, 괜찮아요!",rom:"Dowadeurilkkayo? A, gwaenchanayo!",en:"Can I help you? Oh, I'm fine, thanks!"},{kr:"늦어서 미안해요. — 괜찮아요!",rom:"Neujeoseo mianhaeyo. — Gwaenchanayo!",en:"Sorry I'm late. — No worries!"}],tip:"This one word can replace 'sorry', 'no thank you', 'it's alright', and 'I'm okay' depending on context — incredibly versatile!"},
+  { kr:"어서 오세요",rom:"eoseo oseyo",en:"Welcome! / Please come in quickly!",origin:"어서 means 'quickly/hurry' and 오세요 means 'please come'. Together it expresses an eager, warm welcome.",uses:["Said by shopkeepers and restaurant staff","Welcoming guests to your home","You'll hear this constantly in Korea"],examples:[{kr:"어서 오세요! 몇 분이세요?",rom:"Eoseo oseyo! Myeot buniseyo?",en:"Welcome! How many in your party?"},{kr:"어서 오세요, 앉으세요!",rom:"Eoseo oseyo, anjeuseyo!",en:"Welcome, please sit down!"}],tip:"You don't need to respond to this — just smile and nod. Koreans say it reflexively the moment a customer enters."},
+  { kr:"잠깐만요",rom:"jamkkanmanyo",en:"Just a moment / One second",origin:"잠깐 means 'a brief moment' (from Chinese 暫間) + 만 (only) + 요 (polite ending). Used to ask for a brief pause.",uses:["Asking someone to wait","Buying time when you don't understand","Stopping someone before they leave"],examples:[{kr:"잠깐만요! 질문이 있어요.",rom:"Jamkkanmanyo! Jilmuni isseoyo.",en:"One moment! I have a question."},{kr:"잠깐만요, 다시 말해주세요.",rom:"Jamkkanmanyo, dasi malhaejuseyo.",en:"Hold on, please say that again."}],tip:"Perfect phrase when you need a second to think or when someone is walking away. Much softer than 잠깐! alone."},
+  { kr:"맛있어요",rom:"masisseoyo",en:"It's delicious / It tastes good",origin:"맛 (taste/flavor) + 있다 (to have/exist) = literally 'to have taste'. One of the most important phrases when eating with Koreans!",uses:["Complimenting food at a restaurant","Thanking a host who cooked for you","Reacting to street food"],examples:[{kr:"와, 정말 맛있어요!",rom:"Wa, jeongmal masisseoyo!",en:"Wow, this is really delicious!"},{kr:"어머니, 음식이 너무 맛있어요.",rom:"Eomeoni, eumsigi neomu masisseoyo.",en:"Mom, the food is so delicious."}],tip:"Saying this to a Korean host or restaurant owner is one of the best compliments you can give. Their face will light up!"},
+  { kr:"실례합니다",rom:"sillyehamnida",en:"Excuse me (formal)",origin:"From Chinese 失禮 (sille) meaning 'to lose/lack courtesy', + 합니다 (formal verb ending).",uses:["Getting a stranger's attention","Passing through a crowd","Starting a question with a stranger"],examples:[{kr:"실례합니다, 화장실이 어디예요?",rom:"Sillyehamnida, hwajangsiri eodiyeyo?",en:"Excuse me, where is the restroom?"},{kr:"실례합니다! 잠깐 지나갈게요.",rom:"Sillyehamnida! Jamkkan jinagalgeyo.",en:"Excuse me! I'll just pass through."}],tip:"More formal than 저기요 (hey/excuse me), which is what you'd call a waiter. Use 실례합니다 with strangers on the street."},
+  { kr:"얼마예요",rom:"eolmayeyo",en:"How much is it?",origin:"얼마 is a native Korean word meaning 'how much/how many' + 예요 (polite 'is'). Essential for any shopping situation.",uses:["Asking prices at markets","Checking taxi fares","Asking about quantities"],examples:[{kr:"이거 얼마예요?",rom:"Igeo eolmayeyo?",en:"How much is this?"},{kr:"사과 한 개에 얼마예요?",rom:"Sagwa han gaee eolmayeyo?",en:"How much is one apple?"}],tip:"At traditional markets (시장), you can often negotiate. Start with 얼마예요? then try 깎아 주세요 (please give me a discount)!"},
+  { kr:"고마워요",rom:"gomawoyo",en:"Thank you (casual-polite)",origin:"From 고맙다 — a pure native Korean word for gratitude, warmer and more personal than 감사합니다.",uses:["Thanking friends or people your age","Casual but still respectful situations","More heartfelt than 감사합니다 in close relationships"],examples:[{kr:"도와줘서 고마워요!",rom:"Dowajwoseo gomawoyo!",en:"Thank you for helping me!"},{kr:"선물 고마워요.",rom:"Seonmul gomawoyo.",en:"Thank you for the gift."}],tip:"감사합니다 is more formal (use with elders or strangers). 고마워요 feels warmer — like 'thanks so much' between friends."},
+  { kr:"죄송합니다",rom:"joesonghamnida",en:"I'm very sorry (formal)",origin:"From Chinese 罪悚 (joesung) meaning 'to feel guilty/ashamed' + 합니다. A deep, sincere apology.",uses:["Formal apology to elders or strangers","Bumping into someone","Making a mistake in a professional setting"],examples:[{kr:"늦어서 죄송합니다.",rom:"Neujeoseo joesonghamnida.",en:"I'm very sorry for being late."},{kr:"죄송합니다, 제가 실수했어요.",rom:"Joesonghamnida, jega silsuhaesseoyo.",en:"I'm so sorry, I made a mistake."}],tip:"미안해요 is casual sorry (friends/peers). 죄송합니다 shows deep respect — always use this with elders or in formal situations."},
+  { kr:"화이팅",rom:"hwaiting",en:"You can do it! / Fighting! / Go!",origin:"A Korean adaptation of the English word 'fighting' — used as a cheer of encouragement.",uses:["Cheering someone on before an exam","Encouraging a friend","Self-motivation"],examples:[{kr:"시험 잘 봐요! 화이팅!",rom:"Siheom jal bwayo! Hwaiting!",en:"Do well on your exam! You got this!"},{kr:"오늘도 화이팅!",rom:"Oneuldo hwaiting!",en:"You've got this today too!"}],tip:"You'll hear K-drama characters shout this constantly. It's one of those words that makes Koreans smile when a foreigner uses it naturally."},
+  { kr:"천천히",rom:"cheoncheonhi",en:"Slowly / Take your time",origin:"From 천천하다 — a pure Korean expression meaning 'to be slow and relaxed'. The -히 ending turns it into an adverb.",uses:["Asking someone to speak slower","Telling a driver to slow down","Telling yourself to relax"],examples:[{kr:"천천히 말해주세요.",rom:"Cheoncheonhi malhaejuseyo.",en:"Please speak slowly."},{kr:"천천히 드세요!",rom:"Cheoncheonhi deuseyo!",en:"Take your time eating! (Enjoy your meal!)"}],tip:"천천히 드세요 is what Koreans say as food is served — like 'bon appétit'. It literally means 'eat slowly' but implies 'enjoy!'"},
+  { kr:"맞아요",rom:"majayo",en:"That's right / Exactly / Yes, correct",origin:"From 맞다 — native Korean for 'to be correct/to match'. A casual, energetic way to affirm what someone said.",uses:["Agreeing with someone enthusiastically","Confirming information","Reacting to something true"],examples:[{kr:"그 식당 맛있죠? — 맞아요, 너무 좋아요!",rom:"Geu sikdang masitjyo? — Majayo, neomu joayo!",en:"That restaurant is delicious, right? — Exactly, I love it!"},{kr:"오늘 월요일이에요? — 맞아요!",rom:"Oneul woryoirieyo? — Majayo!",en:"Is today Monday? — That's right!"}],tip:"More energetic than 네 (yes). Koreans use it like 'Exactly!' or 'You're so right!' — great for conversations with locals."},
+];
+
+const GRAMMAR_QUESTIONS = [
+  { q:"Which particle marks the subject in Korean?",opts:["을/를","이/가","에서","한테"],ans:1,exp:"이/가 marks the subject. 을/를 marks the object."},
+  { q:"How do you say 'I am a student' in Korean?",opts:["저는 학생이에요","나를 학생","학생은 저","저가 학생을"],ans:0,exp:"저는 학생이에요 — 저는 (I/topic), 학생이에요 (am a student)"},
+  { q:"What does '고 싶어요' express?",opts:["Past tense","Want to do","Must do","Can do"],ans:1,exp:"~고 싶어요 expresses desire: 'I want to...'"},
+  { q:"Which is the polite speech level ending?",opts:["-야","-어","-아요/어요","-지"],ans:2,exp:"-아요/어요 is the standard polite (존댓말) ending."},
+  { q:"Korean sentence order is:",opts:["SVO","VSO","SOV","OVS"],ans:2,exp:"Korean follows Subject-Object-Verb order, unlike English."},
+  { q:"Which particle marks the object of a verb?",opts:["이/가","은/는","을/를","에서"],ans:2,exp:"을/를 marks the direct object. Use 을 after consonant, 를 after vowel."},
+  { q:"How do you make 하다 polite present tense?",opts:["하요","했어요","해요","하세요"],ans:2,exp:"하다 → 해요. All 하다 verbs follow this pattern: 공부하다 → 공부해요."},
+  { q:"What is the topic marker particle?",opts:["이/가","을/를","은/는","에"],ans:2,exp:"은/는 marks the topic. Use 은 after consonant, 는 after vowel. 저는 = As for me..."},
+  { q:"How do you say 'It is not a doctor'? (ends in vowel)",opts:["의사가 아니에요","의사이 아니에요","의사는 아니에요","의사 없어요"],ans:0,exp:"Vowel ending → 가 아니에요. Consonant ending → 이 아니에요."},
+  { q:"What does 에 express when used with location?",opts:["Action at a place","Static location / existence","Direction of movement","Time of action"],ans:1,exp:"에 marks static location with 있다/없다. 방에 있어요 = It's in the room."},
+  { q:"What does 에서 express?",opts:["Static existence","Direction","The location where an action happens","Possession"],ans:2,exp:"에서 = where an action takes place. 카페에서 공부해요 = I study at the café."},
+  { q:"How do you say 'bright vowel → 아요, dark vowel → 어요'?",opts:["ㅏ/ㅗ → 아요, others → 어요","ㅣ/ㅡ → 아요, others → 어요","모든 verbs → 아요","모든 verbs → 어요"],ans:0,exp:"ㅏ or ㅗ in stem → 아요. All others → 어요. 가다→가요, 먹다→먹어요."},
+  { q:"Which counter is used for general objects?",opts:["마리","잔","개","권"],ans:2,exp:"개 is the general object counter. 사과 두 개 = two apples."},
+  { q:"Which counter is used for animals?",opts:["개","마리","명","대"],ans:1,exp:"마리 is used for animals. 고양이 한 마리 = one cat."},
+  { q:"What is the polite way to say 'Please give me X'?",opts:["X 줘","X 드려요","X 주세요","X 가져요"],ans:2,exp:"X 주세요 = Please give me X. 커피 주세요 = Coffee please."},
+  { q:"How do you express 'there is A and B'?",opts:["A 또는 B이/가 있어요","A하고 B이/가 있어요","A이/가 B 있어요","A와/과 B에 있어요"],ans:1,exp:"하고 = 'and' between nouns. A하고 B이/가 있어요 = There is A and B."},
+  { q:"Which particle marks the direction 'to/toward'?",opts:["에서","한테","로/으로","까지"],ans:2,exp:"로/으로 marks direction or means. 왼쪽으로 = toward the left. 지하철로 = by subway."},
+  { q:"How do you conjugate 가다 (to go) in polite present?",opts:["가어요","가요","갑니다","갔어요"],ans:1,exp:"가다 has ㅏ vowel → 아요, but 가 + 아요 contracts to 가요."},
+  { q:"What does 받침 mean?",opts:["A vowel","The final consonant under a syllable","A honorific ending","A question word"],ans:1,exp:"받침 is the final consonant at the bottom of a syllable block. It determines 이에요 vs 예요, 이/가, 을/를, etc."},
+  { q:"이에요 vs 예요 — which comes after a consonant-ending noun?",opts:["예요","이에요","둘 다 가능","없어요"],ans:1,exp:"Consonant ending (받침 O) → 이에요. Vowel ending (받침 X) → 예요. 학생이에요 vs 가수예요."},
+  { q:"How do you ask 'where is it?' in Korean?",opts:["어디예요? / 어디에 있어요?","뭐예요?","누구예요?","언제예요?"],ans:0,exp:"어디예요? is casual. 어디에 있어요? specifically asks about location/existence."},
+  { q:"What is the past tense ending for 하다 verbs?",opts:["했어요","하었어요","했습니다만","하아요"],ans:0,exp:"하다 → 했어요 (past). 공부하다 → 공부했어요. 일하다 → 일했어요."},
+  { q:"How do you say 'I want to eat'?",opts:["먹어요","먹고 싶어요","먹을게요","먹었어요"],ans:1,exp:"Verb stem + 고 싶어요 = want to. 먹다 → 먹고 싶어요."},
+  { q:"Which sentence is correct SOV order?",opts:["저는 먹어요 사과를","사과를 저는 먹어요","저는 사과를 먹어요","먹어요 저는 사과를"],ans:2,exp:"Standard SOV: 저는 (S) 사과를 (O) 먹어요 (V). Korean is flexible but this is most natural."},
+  { q:"What does 한테 express?",opts:["Location","Direction to a person","Possession","Time"],ans:1,exp:"한테 = to/from a person. 친구한테 줘요 = I give it to my friend. 한테서 = from a person."},
+  { q:"How do you form a question in Korean?",opts:["Add 'do' before the verb","Add 까/요 rising intonation","Reverse subject and verb","Add a question word at the start"],ans:1,exp:"Korean questions use rising intonation with 요. 가요? = Are you going? 먹어요? = Are you eating?"},
+  { q:"What does ~(으)세요 express?",opts:["Past tense","A suggestion to the listener","Polite request/command","Future tense"],ans:2,exp:"(으)세요 is a polite imperative/honorific. 앉으세요 = Please sit. 드세요 = Please eat."},
+  { q:"How do you say 'Let's go together'?",opts:["같이 가요","함께 가세요","가고 싶어요","가야 해요"],ans:0,exp:"같이 가요 = Let's go together. 같이 = together. The 요 ending can suggest invitation."},
+  { q:"What is the negative form of 있어요?",opts:["있지 않아요","없어요","아니에요","안 있어요"],ans:1,exp:"없어요 is the direct opposite of 있어요. Both are adjective-verbs, not regular verbs."},
+  { q:"What does 안 do when placed before a verb?",opts:["Makes it past tense","Makes it negative","Makes it formal","Makes it a question"],ans:1,exp:"안 + verb = negation. 안 가요 = I'm not going. 안 먹어요 = I'm not eating."},
+  { q:"How do you say 'I can't do X'?",opts:["X 못해요","X 안 해요","X 하지 않아요","X 해요"],ans:0,exp:"못 + verb = can't/unable to. 못 가요 = I can't go. 한국어를 못 해요 = I can't speak Korean."},
+  { q:"What is 이/가 아니에요 used for?",opts:["Saying something exists","Saying something is not something else","Making a question","Expressing desire"],ans:1,exp:"이/가 아니에요 = 'is not'. 학생이 아니에요 = (I am) not a student. Opposite of 이에요/예요."},
+  { q:"What does 도 mean as a particle?",opts:["Only","Also / Too","But","Because"],ans:1,exp:"도 = also, too, even. 저도 = me too. 커피도 = coffee too / even coffee."},
+  { q:"What is the difference between 저 and 나?",opts:["No difference","저 is formal/polite, 나 is casual","나 is formal, 저 is casual","저 is for males, 나 for females"],ans:1,exp:"저 = polite 'I'. 나 = casual 'I'. Use 저 with people you don't know well or elders."},
+  { q:"How do you attach 에 to a time word?",opts:["아침는 = in the morning","아침에 = in the morning","아침이 = in the morning","아침을 = in the morning"],ans:1,exp:"Time + 에 = 'at/in' that time. 아침에 = in the morning. 7시에 = at 7 o'clock."},
+  { q:"Which word means 'every day'?",opts:["오늘","지금","매일","항상"],ans:2,exp:"매일 = every day. 매 = every. 매주 = every week. 매달 = every month."},
+  { q:"How do you say 'Please speak slowly'?",opts:["천천히 말해 주세요","빨리 말해 주세요","크게 말해 주세요","조용히 말해 주세요"],ans:0,exp:"천천히 = slowly. 말하다 → 말해 주세요 = please speak. Combined: 천천히 말해 주세요."},
+  { q:"What does 부터 … 까지 express?",opts:["Near and far","From … to (time/place)","More and more","Either … or"],ans:1,exp:"부터 = from (start point), 까지 = until/to (end point). 월요일부터 금요일까지 = Monday to Friday."},
+  { q:"What is the polite present of 먹다?",opts:["먹아요","먹요","먹어요","먹이에요"],ans:2,exp:"먹다: stem 먹 ends in dark vowel ㅓ → 어요 → 먹어요."},
+  { q:"Which question word means 'why'?",opts:["어디","언제","왜","어떻게"],ans:2,exp:"왜 = why. 어디 = where. 언제 = when. 어떻게 = how."},
+  { q:"How do you say 'How much?' in Korean?",opts:["얼마나요?","얼마예요?","몇이에요?","어때요?"],ans:1,exp:"얼마예요? = How much is it? Used for prices. 얼마나 = how much/many (quantity)."},
+  { q:"What does ~(으)ㄹ게요 express?",opts:["A past action","A promise or intention","A question","A negative"],ans:1,exp:"~(으)ㄹ게요 expresses the speaker's intention or promise. 갈게요 = I will go (I promise)."},
+  { q:"How do you say 'Because I am busy' in Korean?",opts:["바빠서","바쁘고","바쁜데","바쁘지만"],ans:0,exp:"~아서/어서 = because / so. 바쁘다 → 바빠서 = because (I am) busy."},
+  { q:"Which ending means 'but / however'?",opts:["~아서/어서","~고","~(으)ㄴ데/는데","~(으)면"],ans:2,exp:"~(으)ㄴ데/는데 = but, however, background info. 바쁜데 = I'm busy, but..."},
+  { q:"How do you say 'I have to go'?",opts:["가야 해요","가고 싶어요","갈게요","가요"],ans:0,exp:"~아야/어야 해요 = have to / must. 가야 해요 = I have to go. 먹어야 해요 = I have to eat."},
+  { q:"What does ~(으)면 mean?",opts:["Even though","If / When","Because","But"],ans:1,exp:"~(으)면 = if / when. 시간이 있으면 = if you have time. 가면 = if you go."},
+  { q:"How do you connect two verbs: 'I eat and drink'?",opts:["먹고 마셔요","먹다 마셔요","먹으며 마셔요","먹어 마셔요"],ans:0,exp:"Verb stem + 고 connects two actions. 먹다 + 고 + 마셔요 = 먹고 마셔요 = I eat and drink."},
+  { q:"Which is the honorific form of 먹다?",opts:["드세요","드셨어요","드십니다","드시다 / 잡수시다"],ans:3,exp:"드시다 and 잡수시다 are honorific forms of 먹다. Use with elders and respected people."},
+  { q:"What does 한국어로 뭐예요? mean?",opts:["What is your name?","What is it in Korean?","How do you say 'what'?","What language do you speak?"],ans:1,exp:"로/으로 = in (a language). 한국어로 = in Korean. 뭐예요? = What is it? So: What is it in Korean?"},
+  { q:"How do you say 'the more the better' structure?",opts:["~면 더 좋아요","~을수록 더 좋아요","~고 싶어요","~아서 좋아요"],ans:1,exp:"~(으)ㄹ수록 = the more... 많을수록 더 좋아요 = The more the better."},
+  { q:"What is the difference between 좋아요 and 좋아해요?",opts:["No difference","좋아요 = it's good/I like it (state), 좋아해요 = I like it (habit/feeling)","좋아요 is formal, 좋아해요 is casual","좋아해요 is past tense"],ans:1,exp:"좋아요 = adjective (it's good). 좋아해요 = verb (to like, as a habit). 한국어가 좋아요 vs 한국어를 좋아해요."},
+];
+
+const BASE_CARDS = {
+  "Verbs":[{kr:"먹다",rom:"meokda",en:"to eat"},{kr:"마시다",rom:"masida",en:"to drink"},{kr:"가다",rom:"gada",en:"to go"},{kr:"오다",rom:"oda",en:"to come"},{kr:"보다",rom:"boda",en:"to see / watch"},{kr:"듣다",rom:"deutda",en:"to listen"},{kr:"말하다",rom:"malhada",en:"to speak"},{kr:"읽다",rom:"ikda",en:"to read"},{kr:"쓰다",rom:"sseuda",en:"to write"},{kr:"자다",rom:"jada",en:"to sleep"},{kr:"일하다",rom:"ilhada",en:"to work"},{kr:"공부하다",rom:"gongbuhada",en:"to study"},{kr:"좋아하다",rom:"joahada",en:"to like"},{kr:"싫어하다",rom:"sireohada",en:"to dislike"},{kr:"있다",rom:"itda",en:"to exist / to have"},{kr:"없다",rom:"eopda",en:"to not exist / to not have"},{kr:"하다",rom:"hada",en:"to do"},{kr:"만나다",rom:"mannada",en:"to meet"},{kr:"알다",rom:"alda",en:"to know"},{kr:"모르다",rom:"moreuda",en:"to not know"},{kr:"사다",rom:"sada",en:"to buy"},{kr:"팔다",rom:"palda",en:"to sell"},{kr:"주다",rom:"juda",en:"to give"},{kr:"받다",rom:"batda",en:"to receive"},{kr:"열다",rom:"yeolda",en:"to open"},{kr:"닫다",rom:"datda",en:"to close"},{kr:"앉다",rom:"anda",en:"to sit"},{kr:"서다",rom:"seoda",en:"to stand"},{kr:"걷다",rom:"geotda",en:"to walk"},{kr:"뛰다",rom:"ttwida",en:"to run"},{kr:"타다",rom:"tada",en:"to ride / board"},{kr:"내리다",rom:"naerida",en:"to get off / come down"},{kr:"찾다",rom:"chatda",en:"to find / look for"},{kr:"만들다",rom:"mandeulda",en:"to make"},{kr:"씻다",rom:"ssitda",en:"to wash"},{kr:"입다",rom:"ipda",en:"to wear (clothing)"},{kr:"벗다",rom:"beotda",en:"to take off (clothing)"},{kr:"놀다",rom:"nolda",en:"to play / hang out"},{kr:"운동하다",rom:"undonghada",en:"to exercise"},{kr:"요리하다",rom:"yorihada",en:"to cook"},{kr:"청소하다",rom:"cheongsohada",en:"to clean"},{kr:"전화하다",rom:"jeonhwahada",en:"to call (phone)"},{kr:"문자하다",rom:"munjahada",en:"to text"},{kr:"기다리다",rom:"gidarida",en:"to wait"},{kr:"물어보다",rom:"mureoboda",en:"to ask"},{kr:"대답하다",rom:"daedaphada",en:"to answer"},{kr:"생각하다",rom:"saenggakada",en:"to think"},{kr:"좋아지다",rom:"joajida",en:"to get better / improve"},{kr:"시작하다",rom:"sijakhada",en:"to start"},{kr:"끝나다",rom:"kkeunnada",en:"to finish / end"}],
+  "Expressions":[{kr:"안녕하세요",rom:"annyeonghaseyo",en:"Hello (formal)"},{kr:"감사합니다",rom:"gamsahamnida",en:"Thank you"},{kr:"잘 지내요",rom:"jal jinaeyo",en:"I'm doing well"},{kr:"조금 바빠요",rom:"jogeum bappayo",en:"I'm a little busy"},{kr:"피곤해요",rom:"pigonhaeyo",en:"I'm tired"},{kr:"그저 그래요",rom:"geujeo geuraeyo",en:"So-so"},{kr:"괜찮아요",rom:"gwaenchanayo",en:"It's okay / I'm fine"},{kr:"모르겠어요",rom:"moreugesseoyo",en:"I don't know"},{kr:"다시 말해주세요",rom:"dasi malhaejuseyo",en:"Please say it again"},{kr:"천천히",rom:"cheoncheonhi",en:"Slowly"},{kr:"맞아요",rom:"majayo",en:"That's right"},{kr:"아니요",rom:"aniyo",en:"No"},{kr:"네 / 예",rom:"ne / ye",en:"Yes"},{kr:"화이팅!",rom:"hwaiting!",en:"You got this!"},{kr:"잠깐만요",rom:"jamkkanmanyo",en:"Just a moment"},{kr:"어서 오세요",rom:"eoseo oseyo",en:"Welcome! (to a store)"},{kr:"또 오세요",rom:"tto oseyo",en:"Please come again"},{kr:"여기요",rom:"yeogiyo",en:"Here you go / Excuse me"}],
+  "Everyday Objects":[{kr:"우유",rom:"uyu",en:"milk"},{kr:"주스",rom:"juseu",en:"juice"},{kr:"과자",rom:"gwaja",en:"snack / crackers"},{kr:"빵",rom:"ppang",en:"bread"},{kr:"사과",rom:"sagwa",en:"apple"},{kr:"딸기",rom:"ttalgi",en:"strawberry"},{kr:"칫솔",rom:"chitsol",en:"toothbrush"},{kr:"치약",rom:"chiyak",en:"toothpaste"},{kr:"비누",rom:"binu",en:"soap"},{kr:"수건",rom:"sugeon",en:"towel"},{kr:"연필",rom:"yeonpil",en:"pencil"},{kr:"지우개",rom:"jiugae",en:"eraser"},{kr:"모자",rom:"moja",en:"hat"},{kr:"우산",rom:"usan",en:"umbrella"},{kr:"가방",rom:"gabang",en:"bag"},{kr:"시계",rom:"sigye",en:"clock / watch"},{kr:"안경",rom:"angyeong",en:"glasses"},{kr:"휴대전화",rom:"hyudaejeonhwa",en:"mobile phone"},{kr:"지갑",rom:"jigap",en:"wallet"},{kr:"열쇠",rom:"yeolsoe",en:"key"},{kr:"물",rom:"mul",en:"water"},{kr:"커피",rom:"keopi",en:"coffee"},{kr:"차",rom:"cha",en:"tea"},{kr:"밥",rom:"bap",en:"rice / cooked rice"},{kr:"국",rom:"guk",en:"soup"},{kr:"김치",rom:"gimchi",en:"kimchi"},{kr:"라면",rom:"ramyeon",en:"ramen noodles"},{kr:"케이크",rom:"keiku",en:"cake"},{kr:"초콜릿",rom:"chokollit",en:"chocolate"},{kr:"아이스크림",rom:"aiseukerim",en:"ice cream"},{kr:"티셔츠",rom:"tisyeocheu",en:"T-shirt"},{kr:"바지",rom:"baji",en:"pants / trousers"},{kr:"신발",rom:"sinbal",en:"shoes"},{kr:"양말",rom:"yangmal",en:"socks"},{kr:"핸드백",rom:"haendeubaek",en:"handbag"},{kr:"노트",rom:"noteu",en:"notebook"},{kr:"볼펜",rom:"bolpen",en:"ballpoint pen"},{kr:"자",rom:"ja",en:"ruler"},{kr:"가위",rom:"gawi",en:"scissors"},{kr:"테이프",rom:"teipu",en:"tape"},{kr:"거울",rom:"geoul",en:"mirror"},{kr:"빗",rom:"bit",en:"comb / brush"},{kr:"샴푸",rom:"syampu",en:"shampoo"},{kr:"세수대야",rom:"sesudaeya",en:"washbasin"},{kr:"휴지",rom:"hyuji",en:"tissue / toilet paper"},{kr:"충전기",rom:"chungjeongi",en:"charger"},{kr:"이어폰",rom:"ieopon",en:"earphones"},{kr:"노트북",rom:"noteubuk",en:"laptop"},{kr:"마스크",rom:"maseukeu",en:"mask"},{kr:"장갑",rom:"janggap",en:"gloves"}],
+  "Home & Furniture":[{kr:"방",rom:"bang",en:"room"},{kr:"거실",rom:"geosil",en:"living room"},{kr:"부엌",rom:"bueok",en:"kitchen"},{kr:"화장실",rom:"hwajangsil",en:"bathroom"},{kr:"침대",rom:"chimdae",en:"bed"},{kr:"소파",rom:"sopa",en:"sofa"},{kr:"탁자",rom:"takja",en:"table (coffee)"},{kr:"책상",rom:"chaeksang",en:"desk"},{kr:"의자",rom:"uija",en:"chair"},{kr:"냉장고",rom:"naengjanggo",en:"refrigerator"},{kr:"텔레비전",rom:"tellebijeon",en:"television"},{kr:"컴퓨터",rom:"keompyuteo",en:"computer"},{kr:"창문",rom:"changmun",en:"window"},{kr:"문",rom:"mun",en:"door"},{kr:"책",rom:"chaek",en:"book"},{kr:"공책",rom:"gongchaek",en:"notebook"}],
+  "Locations":[{kr:"위",rom:"wi",en:"on top / above"},{kr:"아래",rom:"arae",en:"below / under"},{kr:"옆",rom:"yeop",en:"beside / next to"},{kr:"앞",rom:"ap",en:"in front of"},{kr:"뒤",rom:"dwi",en:"behind"},{kr:"안",rom:"an",en:"inside"},{kr:"밖",rom:"bak",en:"outside"},{kr:"백화점",rom:"baekhwajeom",en:"department store"},{kr:"약국",rom:"yakguk",en:"pharmacy"},{kr:"병원",rom:"byeongwon",en:"hospital"},{kr:"학교",rom:"hakgyo",en:"school"},{kr:"도서관",rom:"doseogwan",en:"library"},{kr:"식당",rom:"sikdang",en:"restaurant"},{kr:"커피숍",rom:"keopissyop",en:"coffee shop"},{kr:"공원",rom:"gongwon",en:"park"},{kr:"은행",rom:"eunhaeng",en:"bank"},{kr:"마트",rom:"mateu",en:"supermarket"},{kr:"지하철역",rom:"jihacheolyeok",en:"subway station"},{kr:"버스 정류장",rom:"beoseu jeongnyujang",en:"bus stop"},{kr:"우체국",rom:"ucheguk",en:"post office"},{kr:"주차장",rom:"juchajang",en:"parking lot"},{kr:"편의점",rom:"pyeonuijeom",en:"convenience store"},{kr:"미용실",rom:"miyongsil",en:"hair salon"},{kr:"서점",rom:"seojeom",en:"bookstore"},{kr:"공항",rom:"gonghang",en:"airport"}],
+  "Numbers & Counters":[{kr:"하나 / 한",rom:"hana / han",en:"1 (native Korean)"},{kr:"둘 / 두",rom:"dul / du",en:"2 (native Korean)"},{kr:"셋 / 세",rom:"set / se",en:"3 (native Korean)"},{kr:"넷 / 네",rom:"net / ne",en:"4 (native Korean)"},{kr:"다섯",rom:"daseot",en:"5 (native Korean)"},{kr:"열",rom:"yeol",en:"10 (native Korean)"},{kr:"스물 / 스무",rom:"seumul / seumu",en:"20 (native Korean)"},{kr:"서른",rom:"seoreun",en:"30 (native Korean)"},{kr:"개",rom:"gae",en:"counter: general objects"},{kr:"명 / 분",rom:"myeong / bun",en:"counter: people (casual/formal)"},{kr:"마리",rom:"mari",en:"counter: animals"},{kr:"잔",rom:"jan",en:"counter: cups/glasses"},{kr:"권",rom:"gwon",en:"counter: books/notebooks"},{kr:"장",rom:"jang",en:"counter: sheets of paper"},{kr:"병",rom:"byeong",en:"counter: bottles"},{kr:"켤레",rom:"kyeolle",en:"counter: pairs of shoes/socks"}],
+  "Days":[{kr:"월요일",rom:"woryoil",en:"Monday"},{kr:"화요일",rom:"hwayoil",en:"Tuesday"},{kr:"수요일",rom:"suyoil",en:"Wednesday"},{kr:"목요일",rom:"mogyoil",en:"Thursday"},{kr:"금요일",rom:"geumyoil",en:"Friday"},{kr:"토요일",rom:"toyoil",en:"Saturday"},{kr:"일요일",rom:"iryoil",en:"Sunday"},{kr:"오늘",rom:"oneul",en:"today"},{kr:"어제",rom:"eoje",en:"yesterday"},{kr:"내일",rom:"naeil",en:"tomorrow"},{kr:"이번 주",rom:"ibeon ju",en:"this week"},{kr:"주말",rom:"jumal",en:"weekend"},{kr:"아침",rom:"achim",en:"morning"},{kr:"점심",rom:"jeomsim",en:"noon / lunch"},{kr:"저녁",rom:"jeonyeok",en:"evening / dinner"},{kr:"밤",rom:"bam",en:"night"}],
+  "Colors":[{kr:"빨간색",rom:"ppalganssaek",en:"red"},{kr:"파란색",rom:"paranssaek",en:"blue"},{kr:"노란색",rom:"noranssaek",en:"yellow"},{kr:"초록색",rom:"chorokssaek",en:"green"},{kr:"하얀색",rom:"hayanssaek",en:"white"},{kr:"검은색",rom:"geomeunssaek",en:"black"},{kr:"분홍색",rom:"bunhongssaek",en:"pink"},{kr:"보라색",rom:"borassaek",en:"purple"},{kr:"주황색",rom:"juhwangssaek",en:"orange"},{kr:"갈색",rom:"galssaek",en:"brown"},{kr:"회색",rom:"hoessaek",en:"grey"},{kr:"금색",rom:"geumssaek",en:"gold"}],
+  "Adjectives":[{kr:"크다",rom:"keuda",en:"big / large"},{kr:"작다",rom:"jakda",en:"small"},{kr:"많다",rom:"manta",en:"many / a lot"},{kr:"적다",rom:"jeokda",en:"few / little"},{kr:"좋다",rom:"jota",en:"good / nice"},{kr:"나쁘다",rom:"nappeuda",en:"bad"},{kr:"맛있다",rom:"masitda",en:"delicious"},{kr:"맛없다",rom:"maseoptda",en:"not tasty"},{kr:"비싸다",rom:"bissada",en:"expensive"},{kr:"싸다",rom:"ssada",en:"cheap"},{kr:"덥다",rom:"deopda",en:"hot (weather)"},{kr:"춥다",rom:"chupda",en:"cold (weather)"},{kr:"바쁘다",rom:"bappeuda",en:"busy"},{kr:"피곤하다",rom:"pigonhada",en:"tired"},{kr:"재미있다",rom:"jaemiitda",en:"fun / interesting"},{kr:"쉽다",rom:"swipda",en:"easy"},{kr:"어렵다",rom:"eoryeopda",en:"difficult"},{kr:"길다",rom:"gilda",en:"long"},{kr:"짧다",rom:"jjalda",en:"short"},{kr:"빠르다",rom:"ppareuda",en:"fast"},{kr:"느리다",rom:"neurida",en:"slow"},{kr:"귀엽다",rom:"gwiyeopda",en:"cute"},{kr:"예쁘다",rom:"yeppeuda",en:"pretty / beautiful"},{kr:"멋있다",rom:"meositda",en:"cool / stylish"},{kr:"똑똑하다",rom:"ttokttokada",en:"smart / clever"},{kr:"친절하다",rom:"chinjeolhada",en:"kind / friendly"},{kr:"조용하다",rom:"joyonghada",en:"quiet"},{kr:"시끄럽다",rom:"sikkeureoptda",en:"noisy / loud"},{kr:"무겁다",rom:"mugeopda",en:"heavy"},{kr:"가볍다",rom:"gabyeopda",en:"light (weight)"}],
+  "Conversations":[
+    {kr:"잘 지내요?",rom:"jal jinaeyo?",en:"How are you? (casual-polite)",level:"casual"},
+    {kr:"(이름) 씨는요?",rom:"(name) ssi-neunyo?",en:"And you, (name)?",level:"polite"},
+    {kr:"뭐가 있어요?",rom:"mwoga isseoyo?",en:"What is there?",level:"casual"},
+    {kr:"어디에 있어요?",rom:"eodie isseoyo?",en:"Where is it?",level:"casual"},
+    {kr:"저기 (물건) (위치)에 있어요",rom:"jeogi (object) (location)e isseoyo",en:"It's over there at the (location)",level:"casual"},
+    {kr:"뭘 드릴까요?",rom:"mwol deurilkkayo?",en:"What can I get you? (formal service)",level:"formal"},
+    {kr:"(물건) 개 주세요",rom:"(object) gae juseyo",en:"Please give me ___ (object)",level:"polite"},
+    {kr:"얼마예요?",rom:"eolmayeyo?",en:"How much is it?",level:"casual"},
+    {kr:"(가격) 원이에요",rom:"(price) woniyeyo",en:"It is ___ won",level:"casual"},
+    {kr:"집 근처에 뭐가 있어요?",rom:"jip geuncheoe mwoga isseoyo?",en:"What is near your house?",level:"casual"},
+    {kr:"방에 뭐가 있어요?",rom:"bange mwoga isseoyo?",en:"What is in your room?",level:"casual"},
+    {kr:"(물건)하고 (물건)이/가 있어요",rom:"(object)hago (object)i/ga isseoyo",en:"There is (A) and (B)",level:"casual"},
+    {kr:"안녕히 계세요.",rom:"annyeonghi gyeseyo.",en:"Goodbye (said by person leaving, to one staying)",level:"formal"},
+    {kr:"안녕히 가세요.",rom:"annyeonghi gaseyo.",en:"Goodbye (said by person staying, to one leaving)",level:"formal"},
+    {kr:"처음 뵙겠습니다.",rom:"cheoeum boepgesseumnida.",en:"Nice to meet you for the first time. (very formal)",level:"formal"},
+    {kr:"잘 부탁드립니다.",rom:"jal butakdeurimnida.",en:"I look forward to working with you. (formal greeting)",level:"formal"},
+    {kr:"오랜만이에요!",rom:"oraenmanieyo!",en:"Long time no see!",level:"casual"},
+    {kr:"요즘 어때요?",rom:"yojeum eottaeyo?",en:"How have you been lately?",level:"polite"},
+    {kr:"밥 먹었어요?",rom:"bap meogeosseoyo?",en:"Have you eaten? (common casual greeting)",level:"casual"},
+    {kr:"어디 가요?",rom:"eodi gayo?",en:"Where are you going?",level:"casual"},
+    {kr:"뭐 해요?",rom:"mwo haeyo?",en:"What are you doing?",level:"casual"},
+    {kr:"시간 있어요?",rom:"sigan isseoyo?",en:"Do you have time?",level:"polite"},
+    {kr:"같이 가요!",rom:"gachi gayo!",en:"Let's go together!",level:"casual"},
+    {kr:"잠깐만요, 모르겠어요.",rom:"jamkkanmanyo, moreugesseoyo.",en:"Hold on, I don't understand.",level:"polite"},
+    {kr:"한국어를 잘 못해요.",rom:"hangugeoreul jal motaeyo.",en:"I'm not good at Korean.",level:"polite"},
+    {kr:"천천히 말해 주세요.",rom:"cheoncheonhi malhae juseyo.",en:"Please speak slowly.",level:"polite"},
+    {kr:"다시 한번 말해 주세요.",rom:"dasi hanbeon malhae juseyo.",en:"Please say it one more time.",level:"polite"},
+    {kr:"한국어로 뭐예요?",rom:"hangugeoro mwoyeyo?",en:"What is it in Korean?",level:"casual"},
+    {kr:"이거 맞아요?",rom:"igeo majayo?",en:"Is this correct?",level:"casual"},
+    {kr:"도와주세요!",rom:"dowajuseyo!",en:"Please help me!",level:"polite"},
+    {kr:"괜찮으세요?",rom:"gwaenchaneuseyo?",en:"Are you okay? (formal concern)",level:"formal"},
+    {kr:"조심하세요.",rom:"josimhaseyo.",en:"Be careful. / Take care.",level:"formal"},
+    {kr:"맛있게 드세요.",rom:"masitge deuseyo.",en:"Enjoy your meal! (to someone eating)",level:"polite"},
+    {kr:"많이 드세요.",rom:"mani deuseyo.",en:"Please eat a lot! (generous host phrase)",level:"polite"},
+    {kr:"배불러요.",rom:"baebulleoyo.",en:"I'm full.",level:"casual"},
+    {kr:"조금만 주세요.",rom:"jogeumman juseyo.",en:"Just a little, please.",level:"polite"},
+    {kr:"포장해 주세요.",rom:"pojangae juseyo.",en:"Please pack it to go.",level:"polite"},
+    {kr:"계산서 주세요.",rom:"gyesanseo juseyo.",en:"Please bring the bill.",level:"polite"},
+    {kr:"카드 돼요?",rom:"kadeu dwaeyo?",en:"Can I pay by card?",level:"casual"},
+    {kr:"화장실이 어디예요?",rom:"hwajangsiri eodiyeyo?",en:"Where is the bathroom?",level:"polite"},
+    {kr:"사진 찍어도 돼요?",rom:"sajin jjigeodo dwaeyo?",en:"May I take a photo?",level:"polite"},
+    {kr:"얼마나 걸려요?",rom:"eolmana geollyeoyo?",en:"How long does it take?",level:"casual"},
+    {kr:"어떻게 가요?",rom:"eotteoke gayo?",en:"How do I get there?",level:"casual"},
+    {kr:"버스/지하철로 가면 돼요?",rom:"beoseu/jihacheollo gamyeon dwaeyo?",en:"Can I go by bus / subway?",level:"casual"},
+    {kr:"여기서 내려 주세요.",rom:"yeogiseo naeryo juseyo.",en:"Please drop me off here.",level:"polite"},
+    {kr:"예약하고 싶어요.",rom:"yeyakhago sipeoyo.",en:"I'd like to make a reservation.",level:"polite"},
+    {kr:"자리 있어요?",rom:"jari isseoyo?",en:"Do you have seats available?",level:"casual"},
+    {kr:"추천해 주세요.",rom:"chucheonhae juseyo.",en:"Please recommend something.",level:"polite"},
+    {kr:"이거랑 저거 주세요.",rom:"igeolang jeogeo juseyo.",en:"Please give me this and that.",level:"casual"},
+    {kr:"맵지 않게 해 주세요.",rom:"maepji ange hae juseyo.",en:"Please make it not spicy.",level:"polite"},
+  ],
+};
+
+// Categories where cards are shown English→Korean (reverse mode)
+const REVERSE_CATS = new Set(["Numbers & Counters","Days","Colors","Adjectives","Conversations"]);
+
+// Example sentences for flashcards (keyed by Korean word)
+const FC_EXAMPLES = {
+  "먹다":{kr:"저는 매일 아침에 밥을 먹어요.",en:"I eat rice every morning."},
+  "마시다":{kr:"커피를 마시고 싶어요.",en:"I want to drink coffee."},
+  "가다":{kr:"학교에 가요.",en:"I go to school."},
+  "오다":{kr:"친구가 집에 와요.",en:"My friend comes to my house."},
+  "보다":{kr:"영화를 봐요.",en:"I watch a movie."},
+  "듣다":{kr:"음악을 들어요.",en:"I listen to music."},
+  "말하다":{kr:"한국어로 말해요.",en:"I speak in Korean."},
+  "읽다":{kr:"책을 읽어요.",en:"I read a book."},
+  "쓰다":{kr:"일기를 써요.",en:"I write a diary."},
+  "자다":{kr:"밤에 일찍 자요.",en:"I sleep early at night."},
+  "일하다":{kr:"회사에서 일해요.",en:"I work at a company."},
+  "공부하다":{kr:"한국어를 공부해요.",en:"I study Korean."},
+  "좋아하다":{kr:"한국 음식을 좋아해요.",en:"I like Korean food."},
+  "있다":{kr:"가방 안에 지갑이 있어요.",en:"There is a wallet in the bag."},
+  "없다":{kr:"지금 시간이 없어요.",en:"I have no time right now."},
+  "하다":{kr:"숙제를 해요.",en:"I do my homework."},
+  "만나다":{kr:"친구를 만나요.",en:"I meet my friend."},
+  "알다":{kr:"그 사람을 알아요.",en:"I know that person."},
+  "사다":{kr:"마트에서 사과를 사요.",en:"I buy apples at the mart."},
+  "주다":{kr:"친구한테 선물을 줘요.",en:"I give a gift to my friend."},
+  "받다":{kr:"생일 선물을 받았어요.",en:"I received a birthday gift."},
+  "찾다":{kr:"열쇠를 찾아요.",en:"I'm looking for my keys."},
+  "만들다":{kr:"케이크를 만들어요.",en:"I make a cake."},
+  "입다":{kr:"오늘 파란 옷을 입어요.",en:"Today I wear a blue outfit."},
+  "놀다":{kr:"친구하고 같이 놀아요.",en:"I hang out with my friend."},
+  "운동하다":{kr:"매일 아침에 운동해요.",en:"I exercise every morning."},
+  "요리하다":{kr:"저녁에 요리해요.",en:"I cook in the evening."},
+  "청소하다":{kr:"주말에 집을 청소해요.",en:"I clean the house on weekends."},
+  "전화하다":{kr:"엄마한테 전화해요.",en:"I call my mom."},
+  "기다리다":{kr:"버스를 기다려요.",en:"I wait for the bus."},
+  "생각하다":{kr:"좋은 방법을 생각해요.",en:"I think of a good method."},
+  "시작하다":{kr:"수업이 9시에 시작해요.",en:"Class starts at 9 o'clock."},
+  "안녕하세요":{kr:"선생님, 안녕하세요!",en:"Hello, teacher!"},
+  "감사합니다":{kr:"도와주셔서 감사합니다.",en:"Thank you for helping me."},
+  "괜찮아요":{kr:"걱정하지 마세요, 괜찮아요.",en:"Don't worry, it's okay."},
+  "잠깐만요":{kr:"잠깐만요, 지금 바빠요.",en:"One moment, I'm busy right now."},
+  "맛있어요":{kr:"이 김치찌개 정말 맛있어요!",en:"This kimchi stew is really delicious!"},
+  "화이팅":{kr:"시험 잘 봐요, 화이팅!",en:"Do well on your exam, fighting!"},
+  "천천히":{kr:"천천히 말해 주세요.",en:"Please speak slowly."},
+  "맞아요":{kr:"맞아요, 저도 그렇게 생각해요.",en:"That's right, I think so too."},
+  "얼마예요":{kr:"이 책 얼마예요?",en:"How much is this book?"},
+  "고마워요":{kr:"도와줘서 고마워요!",en:"Thank you for helping me!"},
+  "죄송합니다":{kr:"늦어서 죄송합니다.",en:"I'm sorry for being late."},
+  "크다":{kr:"저 건물이 정말 커요.",en:"That building is really big."},
+  "작다":{kr:"이 방은 조금 작아요.",en:"This room is a little small."},
+  "많다":{kr:"오늘 숙제가 많아요.",en:"There's a lot of homework today."},
+  "좋다":{kr:"오늘 날씨가 좋아요.",en:"The weather is nice today."},
+  "나쁘다":{kr:"오늘 기분이 나빠요.",en:"I'm in a bad mood today."},
+  "맛있다":{kr:"이 라면 맛있어요!",en:"This ramen is delicious!"},
+  "비싸다":{kr:"이 가방 너무 비싸요.",en:"This bag is too expensive."},
+  "싸다":{kr:"편의점이 마트보다 싸요.",en:"Convenience stores are cheaper than marts."},
+  "덥다":{kr:"여름에 한국은 정말 더워요.",en:"Korea is really hot in summer."},
+  "춥다":{kr:"겨울에 밖이 너무 추워요.",en:"It's too cold outside in winter."},
+  "바쁘다":{kr:"요즘 많이 바빠요.",en:"I've been very busy lately."},
+  "피곤하다":{kr:"오늘 너무 피곤해요.",en:"I'm really tired today."},
+  "재미있다":{kr:"한국어 공부가 재미있어요.",en:"Studying Korean is fun."},
+  "쉽다":{kr:"이 문법은 쉬워요.",en:"This grammar is easy."},
+  "어렵다":{kr:"한자는 어려워요.",en:"Chinese characters are difficult."},
+  "귀엽다":{kr:"그 강아지 너무 귀여워요!",en:"That puppy is so cute!"},
+  "예쁘다":{kr:"오늘 꽃이 정말 예뻐요.",en:"The flowers today are really pretty."},
+  "월요일":{kr:"월요일에 수업이 있어요.",en:"I have class on Monday."},
+  "오늘":{kr:"오늘 날씨가 어때요?",en:"How's the weather today?"},
+  "어제":{kr:"어제 뭐 했어요?",en:"What did you do yesterday?"},
+  "내일":{kr:"내일 만나요!",en:"Let's meet tomorrow!"},
+  "아침":{kr:"아침에 커피를 마셔요.",en:"I drink coffee in the morning."},
+  "점심":{kr:"점심에 같이 밥 먹어요.",en:"Let's eat lunch together."},
+  "저녁":{kr:"저녁에 뭐 해요?",en:"What are you doing in the evening?"},
+  "밥":{kr:"한국 사람들은 매일 밥을 먹어요.",en:"Koreans eat rice every day."},
+  "커피":{kr:"아침마다 커피를 마셔요.",en:"I drink coffee every morning."},
+  "김치":{kr:"한국 식당에서 김치를 먹었어요.",en:"I ate kimchi at a Korean restaurant."},
+  "가방":{kr:"이 가방 예뻐요, 얼마예요?",en:"This bag is pretty, how much is it?"},
+  "시계":{kr:"책상 위에 시계가 있어요.",en:"There is a clock on the desk."},
+  "안경":{kr:"안경 없으면 잘 안 보여요.",en:"Without glasses I can't see well."},
+  "우산":{kr:"비가 와서 우산을 가져왔어요.",en:"It was raining so I brought an umbrella."},
+};
+
+// ── B2 Data ──────────────────────────────────────────────────────────────────
+const B2_SUBTABS = ["날씨 Weather","기분 Mood","안/지않다 Negation","시간 Time","날짜 Date","시간 입자 Time Particle"];
+
+const B2_FLASHCARD_DECKS = {
+  "날씨 Weather": [
+    {kr:"맑다",rom:"makda",en:"to be clear/sunny",ex:{kr:"오늘 날씨가 맑아요.",en:"The weather is clear today."}},
+    {kr:"흐리다",rom:"heurida",en:"to be cloudy/overcast",ex:{kr:"오늘 하늘이 흐려요.",en:"The sky is overcast today."}},
+    {kr:"비가 오다",rom:"biga oda",en:"to rain (lit. rain comes)",ex:{kr:"지금 밖에 비가 와요.",en:"It's raining outside right now."}},
+    {kr:"눈이 오다",rom:"nuni oda",en:"to snow (lit. snow comes)",ex:{kr:"겨울에 눈이 많이 와요.",en:"It snows a lot in winter."}},
+    {kr:"바람이 불다",rom:"barami bulda",en:"to be windy (lit. wind blows)",ex:{kr:"오늘 바람이 많이 불어요.",en:"It's very windy today."}},
+    {kr:"덥다",rom:"deopda",en:"to be hot (weather)",ex:{kr:"여름에는 정말 더워요.",en:"It's really hot in summer."}},
+    {kr:"춥다",rom:"chupda",en:"to be cold (weather)",ex:{kr:"오늘 날씨가 추워요.",en:"The weather is cold today."}},
+    {kr:"따뜻하다",rom:"ttatteutada",en:"to be warm",ex:{kr:"봄에는 따뜻해요.",en:"It's warm in spring."}},
+    {kr:"시원하다",rom:"siwonhada",en:"to be cool/refreshing",ex:{kr:"가을 날씨가 시원해요.",en:"Autumn weather is cool."}},
+    {kr:"날씨",rom:"nalssi",en:"weather",ex:{kr:"오늘 날씨가 어때요?",en:"What's the weather like today?"}},
+    {kr:"봄",rom:"bom",en:"spring",ex:{kr:"봄에는 꽃이 피어요.",en:"Flowers bloom in spring."}},
+    {kr:"여름",rom:"yeoreum",en:"summer",ex:{kr:"여름에 수영을 해요.",en:"I swim in summer."}},
+    {kr:"가을",rom:"gaeul",en:"autumn/fall",ex:{kr:"가을에 단풍이 예뻐요.",en:"Autumn leaves are beautiful in fall."}},
+    {kr:"겨울",rom:"gyeoul",en:"winter",ex:{kr:"겨울에 눈사람을 만들어요.",en:"I make a snowman in winter."}},
+    {kr:"계절",rom:"gyejeol",en:"season",ex:{kr:"한국에는 사계절이 있어요.",en:"Korea has four seasons."}},
+    {kr:"비",rom:"bi",en:"rain",ex:{kr:"비가 오니까 우산을 가져가요.",en:"It's raining so take an umbrella."}},
+    {kr:"눈",rom:"nun",en:"snow",ex:{kr:"눈이 와서 길이 미끄러워요.",en:"It's slippery because it snowed."}},
+    {kr:"바람",rom:"baram",en:"wind",ex:{kr:"오늘 바람이 강해요.",en:"The wind is strong today."}},
+    {kr:"구름",rom:"gureum",en:"cloud",ex:{kr:"하늘에 구름이 많아요.",en:"There are many clouds in the sky."}},
+    {kr:"태양/해",rom:"taeyang/hae",en:"sun",ex:{kr:"오늘 해가 밝아요.",en:"The sun is bright today."}},
+  ],
+  "기분 Mood": [
+    {kr:"기분이 좋다",rom:"gibuni jota",en:"to be in a good mood",ex:{kr:"오늘 기분이 좋아요!",en:"I'm in a good mood today!"}},
+    {kr:"기분이 나쁘다",rom:"gibuni nappeuda",en:"to be in a bad mood",ex:{kr:"왜 기분이 나빠요?",en:"Why are you in a bad mood?"}},
+    {kr:"행복하다",rom:"haengbokhada",en:"to be happy",ex:{kr:"지금 정말 행복해요.",en:"I'm really happy right now."}},
+    {kr:"슬프다",rom:"seulpeuda",en:"to be sad",ex:{kr:"그 영화를 보고 슬펐어요.",en:"I was sad after watching that movie."}},
+    {kr:"화가 나다",rom:"hwaga nada",en:"to be angry",ex:{kr:"왜 화가 났어요?",en:"Why are you angry?"}},
+    {kr:"무섭다",rom:"museopda",en:"to be scared/scary",ex:{kr:"귀신 이야기가 무서워요.",en:"Ghost stories are scary."}},
+    {kr:"걱정되다",rom:"geokjeongdoeda",en:"to be worried",ex:{kr:"시험이 걱정돼요.",en:"I'm worried about the exam."}},
+    {kr:"설레다",rom:"seolleda",en:"to be excited/flutter",ex:{kr:"여행 전날에 설레요.",en:"I'm excited the night before a trip."}},
+    {kr:"피곤하다",rom:"pigonhada",en:"to be tired",ex:{kr:"오늘 너무 피곤해요.",en:"I'm really tired today."}},
+    {kr:"배고프다",rom:"baegopda",en:"to be hungry",ex:{kr:"점심을 못 먹어서 배고파요.",en:"I'm hungry because I didn't eat lunch."}},
+    {kr:"배부르다",rom:"baebureuda",en:"to be full (after eating)",ex:{kr:"많이 먹어서 배불러요.",en:"I'm full because I ate a lot."}},
+    {kr:"심심하다",rom:"simsimhada",en:"to be bored",ex:{kr:"주말에 심심했어요.",en:"I was bored on the weekend."}},
+    {kr:"기분",rom:"gibun",en:"mood/feeling",ex:{kr:"오늘 기분이 어때요?",en:"How do you feel today?"}},
+    {kr:"스트레스",rom:"seuteureseu",en:"stress",ex:{kr:"요즘 스트레스가 많아요.",en:"I've been stressed lately."}},
+    {kr:"기쁘다",rom:"gippeuda",en:"to be glad/joyful",ex:{kr:"친구를 만나서 기뻐요.",en:"I'm glad to see my friend."}},
+  ],
+  "안/지않다 Negation": [
+    {kr:"안 가다",rom:"an gada",en:"not go (short negation)",ex:{kr:"오늘 학교에 안 가요.",en:"I'm not going to school today."}},
+    {kr:"안 먹다",rom:"an meokda",en:"not eat (short negation)",ex:{kr:"아침을 안 먹었어요.",en:"I didn't eat breakfast."}},
+    {kr:"안 하다",rom:"an hada",en:"not do (short negation)",ex:{kr:"숙제를 안 했어요.",en:"I didn't do my homework."}},
+    {kr:"가지 않다",rom:"gaji anta",en:"not go (long negation)",ex:{kr:"오늘 학교에 가지 않아요.",en:"I don't go to school today."}},
+    {kr:"먹지 않다",rom:"meokji anta",en:"not eat (long negation)",ex:{kr:"고기를 먹지 않아요.",en:"I don't eat meat."}},
+    {kr:"하지 않다",rom:"haji anta",en:"not do (long negation)",ex:{kr:"운동을 하지 않았어요.",en:"I didn't exercise."}},
+    {kr:"못 가다",rom:"mot gada",en:"can't go (inability)",ex:{kr:"오늘 파티에 못 가요.",en:"I can't go to the party today."}},
+    {kr:"못 먹다",rom:"mot meokda",en:"can't eat (inability)",ex:{kr:"매운 음식을 못 먹어요.",en:"I can't eat spicy food."}},
+    {kr:"좋아하지 않다",rom:"joahaji anta",en:"not like (long negation)",ex:{kr:"저는 채소를 좋아하지 않아요.",en:"I don't like vegetables."}},
+    {kr:"안 예쁘다 (→ 예쁘지 않다)",rom:"an yeppeuda (→ yeppeujiantda)",en:"not pretty — 이다/하다 verbs must use 지 않다",ex:{kr:"이 색은 예쁘지 않아요.",en:"This color is not pretty."}},
+    {kr:"공부하지 않다",rom:"gongbuhaji anta",en:"not study (하다 verb — use 지 않다)",ex:{kr:"어제 공부하지 않았어요.",en:"I didn't study yesterday."}},
+    {kr:"말하지 않다",rom:"malhaji anta",en:"not speak (하다 verb)",ex:{kr:"그 비밀을 말하지 않을게요.",en:"I won't tell that secret."}},
+  ],
+  "활동 Activity Verbs": [
+    {kr:"수영하다",rom:"suyeonghada",en:"to swim",ex:{kr:"여름에 바다에서 수영해요.",en:"I swim in the sea in summer."}},
+    {kr:"여행하다",rom:"yeohaenghada",en:"to travel",ex:{kr:"방학에 제주도에 여행해요.",en:"I travel to Jeju during vacation."}},
+    {kr:"쇼핑하다",rom:"syopinghada",en:"to go shopping",ex:{kr:"친구하고 백화점에서 쇼핑해요.",en:"I go shopping at the department store with a friend."}},
+    {kr:"노래하다",rom:"noraehada",en:"to sing",ex:{kr:"노래방에서 노래해요.",en:"I sing at the noraebang."}},
+    {kr:"춤추다",rom:"chumchuda",en:"to dance",ex:{kr:"파티에서 춤을 춰요.",en:"I dance at the party."}},
+    {kr:"요리하다",rom:"yorihada",en:"to cook",ex:{kr:"저녁에 파스타를 요리해요.",en:"I cook pasta for dinner."}},
+    {kr:"사진 찍다",rom:"sajin jjikda",en:"to take a photo",ex:{kr:"여행 갈 때 사진을 많이 찍어요.",en:"I take many photos when I travel."}},
+    {kr:"독서하다",rom:"dokseoha da",en:"to read (books)",ex:{kr:"주말에 카페에서 독서해요.",en:"I read at the café on weekends."}},
+    {kr:"산책하다",rom:"sanchaekhada",en:"to take a walk",ex:{kr:"저녁 식사 후에 산책해요.",en:"I take a walk after dinner."}},
+    {kr:"영화 보다",rom:"yeonghwa boda",en:"to watch a movie",ex:{kr:"친구랑 영화를 봤어요.",en:"I watched a movie with a friend."}},
+    {kr:"음악 듣다",rom:"eumak deutda",en:"to listen to music",ex:{kr:"버스 안에서 음악을 들어요.",en:"I listen to music on the bus."}},
+    {kr:"게임하다",rom:"geimhada",en:"to play games",ex:{kr:"집에서 게임을 해요.",en:"I play games at home."}},
+  ],
+};
+
+const B2_DATE_TIME_CARDS = [
+  { q:"Months: How do you say January?", kr:"일월 (1월)", rom:"irwol", en:"January — 일 (1) + 월 (month)", note:"Months use Sino-Korean numbers: 일월(1), 이월(2), 삼월(3), 사월(4), 오월(5), 유월(6), 칠월(7), 팔월(8), 구월(9), 시월(10), 십일월(11), 십이월(12). Note: 유월 not 육월, 시월 not 십월." },
+  { q:"How do you ask 'What month is it?'", kr:"몇 월이에요?", rom:"myeot worieyo?", en:"What month is it?", note:"몇 = what number. 월 = month. Answer: [number]월이에요." },
+  { q:"How do you ask 'What date is it?'", kr:"몇 일이에요? / 며칠이에요?", rom:"myeot irieyo? / myeochirieyo?", en:"What date is it?", note:"며칠이에요? is the most natural way to ask the date. 일 = day number." },
+  { q:"How do you say 'today is the 15th'?", kr:"오늘은 15일이에요.", rom:"oneureun sibo irieyo.", en:"Today is the 15th.", note:"Days use Sino-Korean numbers: 1일~31일. 일 = day counter." },
+  { q:"How do you ask 'What time is it?'", kr:"몇 시예요?", rom:"myeot siyeyo?", en:"What time is it?", note:"몇 시예요? = What time is it? Hours use NATIVE Korean numbers. Minutes use SINO-Korean numbers." },
+  { q:"Hours rule — Native Korean numbers", kr:"한 시, 두 시, 세 시…", rom:"han si, du si, se si…", en:"Hours: 1 o'clock = 한 시, 2 = 두 시, 3 = 세 시, 4 = 네 시", note:"Hours always use native Korean: 한(1)·두(2)·세(3)·네(4)·다섯(5)·여섯(6)·일곱(7)·여덟(8)·아홉(9)·열(10)·열한(11)·열두(12)" },
+  { q:"Minutes rule — Sino-Korean numbers", kr:"오 분, 십 분, 삼십 분…", rom:"o bun, sip bun, samsip bun…", en:"Minutes: 5 min = 오 분, 10 min = 십 분, 30 min = 삼십 분", note:"Minutes always use Sino-Korean: 일(1)·이(2)·삼(3)·사(4)·오(5)·육(6)·칠(7)·팔(8)·구(9)·십(10)·…삼십(30)" },
+  { q:"How do you say '3:30' (half-past)?", kr:"세 시 삼십 분 / 세 시 반", rom:"se si samsip bun / se si ban", en:"3:30 — '세 시 삼십 분' or short form '세 시 반'", note:"반 = half = 30 minutes. 두 시 반 = 2:30. 열두 시 반 = 12:30." },
+  { q:"How do you say '10 minutes before 4'?", kr:"네 시 십 분 전이에요.", rom:"ne si sip bun jeon ieyo.", en:"It is 10 minutes before 4 (3:50).", note:"전 = before/to. 분 전 = minutes before the hour. 반대: 분 후 = minutes after." },
+  { q:"How do you say 'AM' and 'PM'?", kr:"오전 / 오후", rom:"ojeon / ohu", en:"오전 = AM (before noon) · 오후 = PM (after noon)", note:"오전 열 시 = 10 AM. 오후 세 시 = 3 PM. Always place 오전/오후 BEFORE the time." },
+  { q:"How do you say 'What day of the week is it?'", kr:"무슨 요일이에요?", rom:"museun yoirieyo?", en:"What day of the week is it?", note:"무슨 = what kind of. 요일 = day of the week. Answer: 월요일이에요 = It's Monday." },
+  { q:"Year — how do you say 2025?", kr:"이천이십오 년", rom:"icheonisibo nyeon", en:"2025 — years use Sino-Korean numbers + 년 (year)", note:"년 = year. 이천이십오 년 = 2025. Full date order: 년 → 월 → 일 (year → month → day)." },
+  { q:"How do you say 'What year is it?'", kr:"몇 년이에요?", rom:"myeot nyeonieyo?", en:"What year is it?", note:"몇 년 = what year. Also: 올해가 몇 년이에요? = What year is this year?" },
+  { q:"생일이 언제예요?", kr:"제 생일은 [월] [일]이에요.", rom:"je saengireun [wol] [il]ieyo.", en:"My birthday is [month] [day].", note:"생일 = birthday. 생일이 언제예요? = When is your birthday? Answer with 월 and 일." },
+  { q:"고향이 어디예요?", kr:"제 고향은 [도시]예요.", rom:"je goyangeun [city]yeyo.", en:"My hometown is [city].", note:"고향 = hometown. 어디예요? = where is it? You can also say: [도시]에서 왔어요." },
+];
+
+const B2_VOCAB_CARDS = [
+  { q:"년 — what does it mean?", kr:"년", rom:"nyeon", en:"year (counter)", note:"이천이십육 년 = 2026. 년 is the Sino-Korean counter for years." },
+  { q:"월 — what does it mean?", kr:"월", rom:"wol", en:"month (counter)", note:"삼월 = March. 십이월 = December. Used in dates: 3월 15일 = March 15th." },
+  { q:"일 — what does it mean? (date)", kr:"일", rom:"il", en:"day/date (counter)", note:"이십오 일 = 25th. Full date: 2026년 4월 16일 = April 16, 2026." },
+  { q:"요일 — what does it mean?", kr:"요일", rom:"yoil", en:"day of the week", note:"무슨 요일이에요? = What day of the week? 요일 names: 월/화/수/목/금/토/일요일." },
+  { q:"이번 / 지난 / 다음", kr:"이번 주 / 지난 주 / 다음 주", rom:"ibeon ju / jinan ju / daeum ju", en:"this week / last week / next week", note:"이번 = this (current). 지난 = last/past. 다음 = next. Same pattern for 달(month): 이번 달/지난 달/다음 달." },
+  { q:"올해 / 작년 / 내년", kr:"올해 / 작년 / 내년", rom:"olhae / jangnyeon / naenyeon", en:"this year / last year / next year", note:"올해 = this year (native Korean). 작년 = last year (Sino-Korean). 내년 = next year (Sino-Korean)." },
+  { q:"여행 — what does it mean?", kr:"여행", rom:"yeohaeng", en:"travel / trip", note:"여행을 가요 = I go on a trip. 여행하다 = to travel. 여행지 = travel destination." },
+  { q:"생일 — what does it mean?", kr:"생일", rom:"saengil", en:"birthday", note:"생일이 언제예요? = When is your birthday? 생일 축하해요! = Happy birthday!" },
+  { q:"고향 — what does it mean?", kr:"고향", rom:"gohyang",en:"hometown", note:"고향이 어디예요? = Where is your hometown? 저는 서울 출신이에요 = I'm from Seoul." },
+  { q:"오전 / 오후", kr:"오전 열 시 / 오후 두 시", rom:"ojeon yeol si / ohu du si", en:"10 AM / 2 PM", note:"오전 = before noon (AM). 오후 = after noon (PM). Goes BEFORE the time expression." },
+  { q:"지금 — what does it mean?", kr:"지금", rom:"jigeum", en:"now / right now", note:"지금 몇 시예요? = What time is it right now? 지금 바빠요 = I'm busy right now." },
+  { q:"매일 / 매주 / 매달 / 매년", kr:"매일 / 매주 / 매달 / 매년", rom:"maeil / maeju / maedal / maenyeon", en:"every day / every week / every month / every year", note:"매 = every. 매일 공부해요 = I study every day. These words do NOT take the particle 에." },
+];
+
+const B2_GRAMMAR_QUESTIONS = [
+  { q:"Which negation form is correct for 하다 verbs? (e.g. 공부하다)",opts:["안 공부하다","공부 안 하다","공부하지 않다","Both B and C"],ans:3,exp:"하다 verbs: use 안 + verb stem form (공부 안 해요) OR verb + 지 않다 (공부하지 않아요). Both are correct. Option 'A' is NOT natural." },
+  { q:"'I don't like spicy food' — choose the correct sentence",opts:["저는 매운 음식을 안 좋아해요.","저는 매운 음식이 안 좋아요.","저는 매운 음식을 좋아지 않아요.","저는 매운 음식을 않아해요."],ans:0,exp:"좋아하다 = to like (action verb). 안 + 좋아해요 or 좋아하지 않아요. Option B uses 좋다 (adjective) — different meaning. C has wrong form, D is not a word." },
+  { q:"What is the short negation of '가요'?",opts:["가지 않아요","안 가요","못 가요","가 않아요"],ans:1,exp:"Short negation: 안 + verb. 안 가요 = not going. Long negation: 가지 않아요. 못 가요 means 'can't go' (inability), which is different." },
+  { q:"Which sentence uses 못 correctly?",opts:["오늘 피곤해서 못 공부해요.","저는 한국어를 못 좋아해요.","어제 못 예뻤어요.","숙제를 못 재미있어요."],ans:0,exp:"못 = unable to (physical/circumstantial inability). It works with action verbs: 못 공부하다, 못 가다, 못 먹다. NOT used with adjectives like 좋다, 예쁘다, 재미있다." },
+  { q:"'지금 몇 시예요?' — It's 3:45 PM. How do you say it?",opts:["오후 세 시 사십오 분이에요.","오후 3시 사십오 분이에요.","오후 삼 시 사십오 분이에요.","Both A and B"],ans:0,exp:"Hours use NATIVE Korean numbers: 세 시 = 3 o'clock. Minutes use SINO-Korean: 사십오 분 = 45 minutes. PM = 오후. Full answer: 오후 세 시 사십오 분이에요." },
+  { q:"How do you say '12:30'?",opts:["열둘 시 삼십 분","열두 시 삼십 분 / 열두 시 반","십이 시 반","십이 시 삼십 분"],ans:1,exp:"열두 시 = 12 o'clock (native Korean: 열두, not 열둘). 반 = half = 30 min. Both 삼십 분 and 반 are correct. Sino-Korean 십이 시 is NOT used for hours." },
+  { q:"Which time word does NOT take the particle 에?",opts:["아침","오후","어제","월요일"],ans:2,exp:"어제 (yesterday), 오늘 (today), 내일 (tomorrow), 지금 (now), 매일 (every day) do NOT take 에. All others take 에: 아침에, 오후에, 월요일에." },
+  { q:"'I study every Monday' — correct sentence?",opts:["저는 매주 월요일에 공부해요.","저는 매일 월요일에 공부해요.","저는 월요일에에 공부해요.","저는 매주 월요일 공부해요."],ans:0,exp:"매주 = every week. 월요일에 = on Monday (에 with 요일). 매일 would mean every day. Double 에에 is wrong. Dropping 에 after 월요일 is unnatural." },
+  { q:"'생일이 언제예요?' — How do you say 'My birthday is April 15th'?",opts:["제 생일은 4월 15일이에요.","제 생일은 사월 십오 일이에요.","Both A and B are correct","제 생일이에요 사월 십오."],ans:2,exp:"Both forms are correct: you can use numerals (4월 15일) or spelled-out Sino-Korean (사월 십오 일). Date order is always 년 → 월 → 일." },
+  { q:"Which is the correct way to say 'I don't study Korean'?",opts:["저는 한국어를 안 공부해요.","저는 한국어를 공부하지 않아요.","저는 한국어를 공부 안 해요.","All of the above are correct."],ans:3,exp:"All three are valid! A uses 안 before 공부하다 (split form). B uses ~지 않다. C splits 공부 and 하다 with 안. They all mean the same thing. In casual speech, C is most common." },
+  { q:"'오늘' — does it take the time particle 에?",opts:["Yes: 오늘에 공부해요.","No: 오늘 공부해요.","It depends on the verb.","Both are equally common."],ans:1,exp:"오늘, 어제, 내일, 지금, 매일 do NOT take 에. Just say 오늘 공부해요 (NOT 오늘에). Compare: 월요일에 공부해요 (요일 DOES take 에)." },
+  { q:"What number system for hours vs. minutes?",opts:["Both use native Korean","Hours: native Korean / Minutes: Sino-Korean","Hours: Sino-Korean / Minutes: native Korean","Both use Sino-Korean"],ans:1,exp:"CRITICAL RULE: Hours = native Korean (한·두·세·네·다섯…열두). Minutes = Sino-Korean (일·이·삼·사·오…오십구). 두 시 삼십 분 = 2:30." },
+];
+
+// B2 Flashcard sub-component
+function B2FlashCard({ card, onMastered, onAgain, showHint, onHint, isGotIt }) {
+  const [revealed, setRevealed] = useState(false);
+  return (
+    <div>
+      {/* Tap anywhere on card to reveal */}
+      <div
+        onClick={() => { if (!revealed) setRevealed(true); }}
+        style={{ background:"#fff", borderRadius:16, padding:"28px 24px", border:`1.5px solid ${revealed ? C.blue : C.border}`, marginBottom:16, minHeight:200, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", cursor: revealed ? "default" : "pointer", transition:"border-color 0.2s" }}
+      >
+        {!revealed && <div style={{ fontSize:11, color:C.muted, marginBottom:10, letterSpacing:1 }}>TAP TO REVEAL</div>}
+        <div style={{ fontSize:13, fontWeight:600, color:C.muted, marginBottom:12, textTransform:"uppercase", letterSpacing:0.5 }}>{card.q || card.kr}</div>
+        {/* Hint shown before reveal */}
+        {!revealed && (
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8 }}>
+            {showHint && card.ex && (
+              <div style={{ background:C.light, borderRadius:8, padding:"6px 12px", fontSize:12, color:C.muted, fontStyle:"italic" }}>
+                💬 {card.ex.kr}
+              </div>
+            )}
+            {!showHint && card.ex && (
+              <button onClick={e=>{e.stopPropagation();onHint();}} style={{ padding:"5px 12px", background:"none", color:C.muted, border:`1px solid ${C.border}`, borderRadius:8, cursor:"pointer", fontSize:11 }}>hint</button>
+            )}
+          </div>
+        )}
+        {revealed && (
+          <div style={{ width:"100%", marginTop:4 }}>
+            <div style={{ fontSize:28, fontWeight:800, color:C.blue, marginBottom:4 }}>{card.kr}</div>
+            <div style={{ fontSize:13, color:C.muted, fontStyle:"italic", marginBottom:6 }}>{card.rom}</div>
+            <div style={{ fontSize:15, fontWeight:600, color:C.text, marginBottom:10 }}>{card.en}</div>
+            {card.ex && (
+              <div style={{ background:C.blueLight, borderRadius:8, padding:"8px 12px", fontSize:13, color:C.blue, textAlign:"left" }}>
+                <div style={{ fontWeight:600 }}>{card.ex.kr}</div>
+                <div style={{ color:C.muted, fontSize:12, marginTop:2 }}>{card.ex.en}</div>
+              </div>
+            )}
+            {card.note && (
+              <div style={{ background:C.light, borderRadius:8, padding:"8px 12px", fontSize:12, color:C.muted, textAlign:"left", marginTop:8 }}>{card.note}</div>
+            )}
+          </div>
+        )}
+      </div>
+      {revealed && (
+        <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+          <button onClick={()=>{setRevealed(false);onAgain();}} style={{ padding:"12px 28px", background:"#fff", color:C.red, border:`1.5px solid ${C.red}`, borderRadius:12, cursor:"pointer", fontSize:20, lineHeight:1 }}>✕</button>
+          <button onClick={()=>{setRevealed(false);onMastered();}} style={{ padding:"12px 28px", background:"#fff", color:C.green, border:`1.5px solid ${C.green}`, borderRadius:12, cursor:"pointer", fontSize:20, lineHeight:1 }}>✓</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const ALL_CARDS = Object.values(BASE_CARDS).flat();
+const FLASHCARDS = { "🌀 Hybrid": ALL_CARDS, ...BASE_CARDS };
+const ALL_CATS = Object.keys(FLASHCARDS);
+const EMPTY_PROGRESS = () => Object.fromEntries(ALL_CATS.map(c => [c, []]));
+
+// Today's date key for daily progress reset
+const TODAY_KEY = new Date().toISOString().slice(0,10);
+
+// ── B1 Review Data (from class slides) ──────────────────────────────────────
+const B1_SUBTABS = ["Introductions","Occupations","Locations","Adjacencies","House Objects","Prices & Quantities"];
+
+const B1_DATA = {
+  "Introductions": [
+    { q:"How do you say your name?", kr:"저는 [이름]이에요/예요.", rom:"Jeoneun [name]ieyo/yeyo.", en:"I am [name].", note:"Use 이에요 after consonant-ending syllable, 예요 after vowel-ending syllable." },
+    { q:"How do you ask 'where are you from?'", kr:"어디에서 왔어요?", rom:"Eodie-seo wasseoyo?", en:"Where did you come from?", note:"Also: 어느 나라 사람이에요? = Which country are you from?" },
+    { q:"How do you say you're from the USA?", kr:"미국에서 왔어요. 미국 사람이에요.", rom:"Miguke-seo wasseoyo. Miguk saramieyo.", en:"I came from the USA. I am American.", note:"Replace 미국 with your country: 한국, 중국, 브라질, 베트남, 프랑스, 케냐, 호주…" },
+    { q:"How do you ask where someone lives?", kr:"어디에서 살아요?", rom:"Eodie-seo sarayo?", en:"Where do you live?", note:"Answer: [City]에 살아요 = I live in [City]. e.g. 얼바인에 살아요." },
+    { q:"How do you answer where you live?", kr:"[도시]에 살아요.", rom:"[city]e sarayo.", en:"I live in [city].", note:"에 = location particle. 뉴욕에 살아요 / 서울에 살아요 / 얼바인에 살아요." },
+    { q:"How do you ask about family size?", kr:"가족이 몇 명이에요?", rom:"Gajogi myeot myeongieyo?", en:"How many people are in your family?", note:"Answer: [number] 명이에요. Use native Korean numbers with 명." },
+    { q:"How do you say 'I have 3 family members'?", kr:"가족이 세 명이에요.", rom:"Gajogi se myeongieyo.", en:"I have three family members.", note:"Native Korean numbers: 하나(1), 둘(2), 셋→세(3), 넷→네(4), 다섯(5)." },
+    { q:"How do you ask someone's job?", kr:"무슨 일 해요? / 직업이 뭐예요?", rom:"Museun il haeyo? / Jigibi mwoyeyo?", en:"What do you do? / What is your job?", note:"Both are natural. 무슨 일 해요 is slightly more casual." },
+    { q:"How do you say 'I am a student'?", kr:"저는 학생이에요.", rom:"Jeoneun haengseongieyo.", en:"I am a student.", note:"학생 ends in consonant ㅇ → 이에요." },
+    { q:"How do you say 'I am a teacher'?", kr:"저는 선생님이에요.", rom:"Jeoneun seonsaengnim ieyo.", en:"I am a teacher.", note:"선생님 ends in consonant ㅁ → 이에요." },
+    { q:"How do you ask why someone learns Korean?", kr:"왜 한국어를 배워요?", rom:"Wae hangugeoreul baeoyo?", en:"Why do you learn Korean?", note:"왜 = why. 배우다 = to learn. 배워요 = polite present." },
+    { q:"How do you answer why you learn Korean?", kr:"한국 문화가 좋아서 배워요.", rom:"Hanguk munhwaga joaseo baeoyo.", en:"I learn because I like Korean culture.", note:"~아서/어서 = because. 좋다→좋아서 = because (it's) good/I like." },
+    { q:"How do you greet someone you haven't seen in a while?", kr:"안녕하세요? 오랜만이에요.", rom:"Annyeonghaseyo? Oraenmanieyo.", en:"Hello! Long time no see.", note:"Follow with: 잘 지내셨어요? (formal) / 잘 지냈어요? (casual)" },
+    { q:"예요 vs 이에요 — what's the rule?", kr:"받침 O → 이에요 / 받침 X → 예요", rom:"Batchim O → ieyo / Batchim X → yeyo", en:"Ends in consonant → 이에요 / Ends in vowel → 예요", note:"한국 사람이에요 (ㅁ) · 가수예요 (ㅜ) · 학생이에요 (ㅇ) · 써니예요" },
+    { q:"How do you say 'I am Korean-American'?", kr:"저는 한국계 미국 사람이에요.", rom:"Jeoneun hanguggye miguk saramieyo.", en:"I am Korean-American.", note:"한국계 = of Korean descent. Useful for heritage speakers!" },
+    { q:"How do you ask someone's name politely?", kr:"성함이 어떻게 되세요?", rom:"Seonghami eotteoke doeseyo?", en:"What is your name? (formal/respectful)", note:"성함 = honorific for 이름 (name). Used with elders or in formal settings." },
+    { q:"How do you say 'Nice to meet you'?", kr:"만나서 반갑습니다.", rom:"Mannaseo bangapseumnida.", en:"I'm glad to meet you.", note:"반갑습니다 is a set phrase for first meetings. Reply with the same." },
+    { q:"How do you ask 'How old are you?' (politely)?", kr:"몇 살이에요? / 연세가 어떻게 되세요?", rom:"Myeot sarieyo? / Yeonsega eotteoke doeseyo?", en:"How old are you? / What is your age? (honorific)", note:"연세 is the honorific form of 나이 (age). Use with elders." },
+    { q:"How do you say 'I am 30 years old'?", kr:"서른 살이에요.", rom:"Seoreun sarieyo.", en:"I am 30 years old.", note:"Use native Korean numbers for age: 스물(20), 서른(30), 마흔(40), 쉰(50)." },
+    { q:"How do you ask 'Do you have siblings'?", kr:"형제자매가 있어요?", rom:"Hyeongjejamae ga isseoyo?", en:"Do you have siblings?", note:"형제자매 = siblings. 형(older brother/male), 누나/언니(older sister), 동생(younger sibling)." },
+    { q:"How do you say 'I have one older sister'?", kr:"언니/누나가 한 명 있어요.", rom:"Eonni/nuna ga han myeong isseoyo.", en:"I have one older sister.", note:"언니 = older sister (female speaker), 누나 = older sister (male speaker)." },
+    { q:"How do you ask 'What is your hobby?'", kr:"취미가 뭐예요?", rom:"Chwimiga mwoyeyo?", en:"What is your hobby?", note:"취미 = hobby. Answer: [취미]를/을 좋아해요 or [취미]가 취미예요." },
+    { q:"How do you say 'My hobby is watching movies'?", kr:"제 취미는 영화 보기예요.", rom:"Je chwineun yeonghwa bogiyeyo.", en:"My hobby is watching movies.", note:"보기 = the act of watching (verb + 기 = gerund). 제 = polite 'my'." },
+    { q:"How do you say 'I am single'?", kr:"미혼이에요. / 혼자예요.", rom:"Mihon ieyo. / Honjayeyo.", en:"I am unmarried. / I am alone (single).", note:"미혼 = unmarried (formal). 혼자 = alone/single (casual)." },
+    { q:"How do you ask 'Are you married?'", kr:"결혼하셨어요?", rom:"Gyeolhon hasyeosseoyo?", en:"Are you married? (polite)", note:"결혼하다 = to marry. -하셨어요? is a respectful past tense question." },
+    { q:"How do you say 'I work at a company'?", kr:"회사에 다녀요. / 회사원이에요.", rom:"Hoesae danyeoyo. / Hoesawon ieyo.", en:"I commute to a company. / I am an office worker.", note:"다니다 = to attend/commute regularly. 회사원 = company employee." },
+    { q:"How do you say 'I am studying Korean'?", kr:"한국어를 공부하고 있어요.", rom:"Hangugeoreul gongbuhago isseoyo.", en:"I am studying Korean (right now).", note:"~고 있어요 = present continuous. 공부하다 + 고 있어요 = am studying." },
+    { q:"How do you say your phone number?", kr:"전화번호가 뭐예요?", rom:"Jeonhwabeonhoga mwoyeyo?", en:"What is your phone number?", note:"Numbers are read digit by digit using Sino-Korean: 일(1) 이(2) 삼(3) 사(4) 오(5) 육(6) 칠(7) 팔(8) 구(9) 영/공(0)." },
+    { q:"How do you exchange contact info?", kr:"연락처를 교환할 수 있어요?", rom:"Yeollakcheoreul gyohwanhal su isseoyo?", en:"Can we exchange contact information?", note:"연락처 = contact info. ~할 수 있어요 = can do. KakaoTalk is common in Korea." },
+    { q:"How do you say 'Please take care of me'?", kr:"잘 부탁드립니다. / 잘 부탁해요.", rom:"Jal butakdeurimnida. / Jal butakhaeyo.", en:"I look forward to your help. / Please take care of me.", note:"Said at the start of a relationship or project. 드립니다 is more formal." },
+  ],
+  "Occupations": [
+    { q:"How do you ask 'Who is it?'", kr:"누구예요?", rom:"Nuguye yo?", en:"Who is it? / Who are they?", note:"Use 누가 when it's the subject of a verb: 누가 해요? = Who does it?" },
+    { q:"Doctor — sentence", kr:"의사예요. 병원에서 일해요.", rom:"Uisayeyo. Byeongwone-seo ilhaeyo.", en:"(I am a) doctor. I work at a hospital.", note:"의사 ends in vowel ㅏ → 예요. Works at 병원." },
+    { q:"Nurse — sentence", kr:"간호사예요. 병원에서 일해요.", rom:"Ganhosayeyo. Byeongwone-seo ilhaeyo.", en:"(I am a) nurse. I work at a hospital.", note:"간호사 ends in vowel ㅏ → 예요." },
+    { q:"Police officer — sentence", kr:"경찰관이에요. 경찰서에서 일해요.", rom:"Gyeongchalgwan ieyo. Gyeongchalseo-eseo ilhaeyo.", en:"(I am a) police officer. I work at a police station.", note:"경찰관 ends in consonant ㄴ → 이에요." },
+    { q:"Firefighter — sentence", kr:"소방관이에요. 소방서에서 일해요.", rom:"Sobanggwan ieyo. Sobangseo-eseo ilhaeyo.", en:"(I am a) firefighter. I work at a fire station.", note:"소방관 ends in consonant ㄴ → 이에요." },
+    { q:"Cook / Chef — sentence", kr:"요리사예요. 식당에서 일해요.", rom:"Yorisayeyo. Sikdange-seo ilhaeyo.", en:"(I am a) chef. I work at a restaurant.", note:"요리사예요 · 식당 = restaurant." },
+    { q:"Office worker — sentence", kr:"회사원이에요. 회사에서 일해요.", rom:"Hoesawon ieyo. Hoesae-seo ilhaeyo.", en:"(I am an) office worker. I work at a company.", note:"회사원 ends in consonant ㄴ → 이에요." },
+    { q:"Homemaker — sentence", kr:"주부예요. 집에서 일해요.", rom:"Jubuyeyo. Jibe-seo ilhaeyo.", en:"(I am a) homemaker. I work at home.", note:"주부 ends in vowel ㅜ → 예요." },
+    { q:"Singer — sentence", kr:"가수예요. 노래해요.", rom:"Gasuyeyo. Noraehaeyo.", en:"(I am a) singer. I sing.", note:"BTS는 가수예요 — not 영화배우!" },
+    { q:"Movie actor — sentence", kr:"영화배우예요. 영화에 나와요.", rom:"Yeonghwabau yeyo. Yeonghwae nawayo.", en:"(I am a) movie actor. I appear in films.", note:"배우 ends in vowel ㅜ → 예요." },
+    { q:"Lawyer — sentence", kr:"변호사예요. 법원에서 일해요.", rom:"Byeonhosayeyo. Beobwone-seo ilhaeyo.", en:"(I am a) lawyer. I work at a courthouse.", note:"변호사 ends in vowel ㅏ → 예요. 법원 = courthouse." },
+    { q:"Hairdresser — sentence", kr:"미용사예요. 미용실에서 일해요.", rom:"Miyongsayeyo. Miyongsire-seo ilhaeyo.", en:"(I am a) hairdresser. I work at a hair salon.", note:"미용실 = beauty salon." },
+    { q:"Driver — sentence", kr:"운전사예요. 버스/택시를 운전해요.", rom:"Unjeonsa yeyo. Beoseu/taeksi-reul unjeonhaeyo.", en:"(I am a) driver. I drive a bus/taxi.", note:"운전하다 = to drive." },
+    { q:"Flight attendant — sentence", kr:"승무원이에요. 비행기에서 일해요.", rom:"Seungmuwon ieyo. Bihaenggi-eseo ilhaeyo.", en:"(I am a) flight attendant. I work on an airplane.", note:"승무원 ends in consonant ㄴ → 이에요." },
+    { q:"Teacher — sentence", kr:"선생님이에요. 학교에서 가르쳐요.", rom:"Seonsaengnim ieyo. Hakgyo-eseo gareuchyeoyo.", en:"(I am a) teacher. I teach at a school.", note:"가르치다 = to teach → 가르쳐요." },
+    { q:"Pharmacist — sentence", kr:"약사예요. 약국에서 일해요.", rom:"Yaksa yeyo. Yakguge-seo ilhaeyo.", en:"(I am a) pharmacist. I work at a pharmacy.", note:"약사 ends in vowel ㅏ → 예요. 약국 = pharmacy." },
+    { q:"How do you say 'is NOT a doctor'?", kr:"의사가 아니에요.", rom:"Uisa-ga anieyo.", en:"(He/she) is not a doctor.", note:"Vowel ending → 가 아니에요. Consonant ending → 이 아니에요. 학생이 아니에요." },
+    { q:"하다 verb conjugation rule", kr:"하다 → 해요", rom:"hada → haeyo", en:"하다 verbs → 해요 (polite present)", note:"일하다→일해요 · 공부하다→공부해요 · 청소하다→청소해요 · 운동하다→운동해요" },
+    { q:"아요/어요 conjugation rule", kr:"ㅏ,ㅗ → 아요 / others → 어요", rom:"a/o vowel → ayo / others → eoyo", en:"Bright vowel → 아요, dark vowel → 어요", note:"가다→가요 · 먹다→먹어요 · 오다→와요 · 있다→있어요" },
+    { q:"How do you say 'What does he/she do at work?'", kr:"무슨 일을 해요?", rom:"Museun ireul haeyo?", en:"What kind of work do (they) do?", note:"무슨 = what kind of. 일 = work. 해요 = do (polite)." },
+    { q:"How do you say 'I work from home'?", kr:"재택근무를 해요.", rom:"Jaetaekgeunmureul haeyo.", en:"I work from home.", note:"재택근무 = remote/home work. Very common phrase post-2020." },
+    { q:"How do you say 'I work part-time'?", kr:"아르바이트를 해요. / 알바를 해요.", rom:"Areubaiteureul haeyo. / Albareul haeyo.", en:"I work part-time.", note:"아르바이트 (from German 'Arbeit') → shortened to 알바 in casual speech." },
+    { q:"How do you say 'I am retired'?", kr:"은퇴했어요. / 퇴직했어요.", rom:"Euntoehae-sseoyo. / Toejighaesseoyo.", en:"I have retired.", note:"은퇴 = retirement. ~했어요 = past tense of 하다." },
+    { q:"How do you say 'I am looking for a job'?", kr:"취업 준비 중이에요.", rom:"Chwieop junbi jungieeyo.", en:"I am preparing for employment / job hunting.", note:"취업 = getting a job. 준비 = preparation. 중이에요 = in the middle of." },
+    { q:"How do you say 'I am a graduate student'?", kr:"대학원생이에요.", rom:"Daehagwonsaeng ieyo.", en:"I am a graduate student.", note:"대학원 = graduate school. 대학생 = undergraduate student." },
+    { q:"How do you say 'I work at a hospital'?", kr:"병원에서 일해요.", rom:"Byeongwone-seo ilhaeyo.", en:"I work at a hospital.", note:"에서 = location of action. 일하다 = to work → 일해요." },
+    { q:"Accountant — sentence", kr:"회계사예요. 회사에서 일해요.", rom:"Hoegyesayeyo. Hoesae-seo ilhaeyo.", en:"(I am an) accountant. I work at a company.", note:"회계사 ends in vowel ㅏ → 예요." },
+    { q:"Engineer — sentence", kr:"엔지니어예요. 회사에서 일해요.", rom:"Enjiniyeoyeyo. Hoesae-seo ilhaeyo.", en:"(I am an) engineer. I work at a company.", note:"엔지니어 ends in vowel ㅓ → 예요." },
+    { q:"Designer — sentence", kr:"디자이너예요. 디자인 회사에서 일해요.", rom:"Dijaineoye-yo. Dijain hoesae-seo ilhaeyo.", en:"(I am a) designer. I work at a design company.", note:"디자이너 ends in vowel ㅓ → 예요." },
+    { q:"How do you say 'I like my job'?", kr:"제 직업을 좋아해요.", rom:"Je jigeobeul joahaeyo.", en:"I like my job.", note:"직업 = job/occupation. 을/를 = object particle. 좋아하다 = to like." },
+  ],
+  "Locations": [
+    { q:"How do you ask 'where is it?'", kr:"어디예요? / 어디에 있어요?", rom:"Eodiyeyo? / Eodie isseoyo?", en:"Where is it? / Where is it located?", note:"어디예요 is casual; 어디에 있어요 specifically asks about location." },
+    { q:"Parking lot", kr:"주차장이에요.", rom:"Juchajang ieyo.", en:"It's a parking lot.", note:"주차장이 어디예요? = Where is the parking lot?" },
+    { q:"Post office", kr:"우체국이에요.", rom:"Ucheguk ieyo.", en:"It's a post office.", note:"우체국에 가요 = I go to the post office." },
+    { q:"Subway station", kr:"지하철역이에요.", rom:"Jihacheolyeog ieyo.", en:"It's a subway station.", note:"지하철역에 가요 = I go to the subway station." },
+    { q:"Movie theater", kr:"극장이에요. / 영화관이에요.", rom:"Geukjang ieyo. / Yeonghwagwan ieyo.", en:"It's a movie theater.", note:"극장 and 영화관 both mean movie theater." },
+    { q:"Swimming pool", kr:"수영장이에요.", rom:"Suyeongjang ieyo.", en:"It's a swimming pool.", note:"수영장에서 수영해요 = I swim at the pool." },
+    { q:"Supermarket", kr:"마트예요. / 슈퍼마켓이에요.", rom:"Mateu yeyo. / Syupeomaket ieyo.", en:"It's a supermarket.", note:"마트에서 사요 = I buy at the mart." },
+    { q:"Department store", kr:"백화점이에요.", rom:"Baekhwajeom ieyo.", en:"It's a department store.", note:"백화점에 가요 = I go to the department store." },
+    { q:"Coffee shop", kr:"커피숍이에요. / 카페예요.", rom:"Keopissyop ieyo. / Kapeyeyo.", en:"It's a coffee shop.", note:"커피숍에서 커피를 마셔요 = I drink coffee at the café." },
+    { q:"Library", kr:"도서관이에요.", rom:"Doseogwan ieyo.", en:"It's a library.", note:"도서관에서 공부해요 = I study at the library." },
+    { q:"Convenience store", kr:"편의점이에요.", rom:"Pyeonuijeom ieyo.", en:"It's a convenience store.", note:"편의점은 24시간 열어요 = Convenience stores are open 24 hours." },
+    { q:"Hair salon", kr:"미용실이에요.", rom:"Miyongsil ieyo.", en:"It's a hair salon.", note:"미용실에서 머리를 잘라요 = I cut my hair at the salon." },
+    { q:"Bookstore", kr:"서점이에요.", rom:"Seojeom ieyo.", en:"It's a bookstore.", note:"서점에서 책을 사요 = I buy books at the bookstore." },
+    { q:"Airport", kr:"공항이에요.", rom:"Gonghang ieyo.", en:"It's an airport.", note:"공항에 가요 = I go to the airport. 인천 국제공항 = Incheon Int'l Airport." },
+    { q:"Hospital", kr:"병원이에요.", rom:"Byeongwon ieyo.", en:"It's a hospital.", note:"병원에 가요 = I go to the hospital." },
+    { q:"Bank", kr:"은행이에요.", rom:"Eunhaeng ieyo.", en:"It's a bank.", note:"은행에서 돈을 찾아요 = I withdraw money at the bank." },
+    { q:"How do you say 'across from'?", kr:"건너편에 있어요.", rom:"Geonneopyeone isseoyo.", en:"It's across from / on the opposite side.", note:"도서관 건너편에 있어요 = It's across from the library." },
+    { q:"How do you say 'nearby'?", kr:"근처에 있어요.", rom:"Geuncheoe isseoyo.", en:"It's nearby / in the vicinity.", note:"집 근처에 뭐가 있어요? = What's near your house?" },
+    { q:"How do you say 'approximately 5 minutes on foot'?", kr:"걸어서 5분쯤 걸려요.", rom:"Georeo-seo o bun jjeum geollyeoyo.", en:"It takes about 5 minutes on foot.", note:"걸어서 = on foot. 쯤 = approximately. 분 = minutes." },
+    { q:"How do you ask 'where are you going?'", kr:"어디에 가요?", rom:"Eodie gayo?", en:"Where are you going?", note:"Answer: [Place]에 가요 = I'm going to [place]." },
+    { q:"How do you say 'it's on the 3rd floor'?", kr:"3층에 있어요.", rom:"Sam cheunge isseoyo.", en:"It's on the 3rd floor.", note:"층 = floor/story. 지하 1층 = basement level 1. 1층 = ground floor." },
+    { q:"How do you say 'turn left'?", kr:"왼쪽으로 가세요.", rom:"Oenjjok-euro gaseyo.", en:"Go to the left / turn left.", note:"오른쪽으로 = to the right. ~으로 가세요 = please go toward." },
+    { q:"How do you say 'go straight'?", kr:"직진하세요.", rom:"Jikjin haseyo.", en:"Go straight.", note:"직진 = going straight. Very useful when giving or receiving directions." },
+    { q:"How do you say 'it's right in front of the station'?", kr:"역 바로 앞에 있어요.", rom:"Yeok baro ape isseoyo.", en:"It's right in front of the station.", note:"바로 = right/directly. 역 = station." },
+    { q:"How do you say 'How long does it take?'", kr:"얼마나 걸려요?", rom:"Eolmana geollyeoyo?", en:"How long does it take?", note:"걸리다 = to take (time). 10분 걸려요 = It takes 10 minutes." },
+    { q:"How do you say 'I take the subway'?", kr:"지하철을 타요.", rom:"Jihacheoreul tayo.", en:"I take the subway.", note:"타다 = to ride/board. 버스를 타요 = I take the bus." },
+    { q:"How do you ask 'Is there a pharmacy near here?'", kr:"이 근처에 약국이 있어요?", rom:"I geuncheoe yakgugi isseoyo?", en:"Is there a pharmacy near here?", note:"이 근처 = near here. [장소]이/가 있어요? = Is there a [place]?" },
+    { q:"How do you say 'it's between the bank and the café'?", kr:"은행하고 카페 사이에 있어요.", rom:"Eunhaenghago kape saie isseoyo.", en:"It's between the bank and the café.", note:"하고 = and. 사이에 = between. A하고 B 사이에 있어요." },
+    { q:"How do you say 'the next stop is Hongdae'?", kr:"다음 정류장은 홍대예요.", rom:"Daeum jeongnyujangeun Hongdaeyeyo.", en:"The next stop is Hongdae.", note:"다음 = next. 정류장 = bus stop. 역 = subway station." },
+    { q:"How do you say 'I got off at the wrong stop'?", kr:"잘못 내렸어요.", rom:"Jalmot naeryeosseoyo.", en:"I got off at the wrong place.", note:"잘못 = wrongly/mistakenly. 내리다 = to get off → 내렸어요 (past)." },
+  ],
+  "Adjacencies": [
+    { q:"위 — what does it mean?", kr:"위에 있어요.", rom:"wie isseoyo.", en:"It's on top / above.", note:"책상 위에 있어요 = It's on top of the desk." },
+    { q:"아래/밑 — what do they mean?", kr:"아래에 있어요. / 밑에 있어요.", rom:"arae-e isseoyo. / mite isseoyo.", en:"It's below / under.", note:"의자 아래에 있어요 = It's under the chair. Both words are interchangeable." },
+    { q:"앞 — what does it mean?", kr:"앞에 있어요.", rom:"ape isseoyo.", en:"It's in front of.", note:"학교 앞에 있어요 = It's in front of the school." },
+    { q:"뒤 — what does it mean?", kr:"뒤에 있어요.", rom:"dwie isseoyo.", en:"It's behind.", note:"집 뒤에 있어요 = It's behind the house." },
+    { q:"안 — what does it mean?", kr:"안에 있어요.", rom:"ane isseoyo.", en:"It's inside.", note:"방 안에 있어요 = It's inside the room. 가방 안에 있어요 = It's inside the bag." },
+    { q:"밖 — what does it mean?", kr:"밖에 있어요.", rom:"bake isseoyo.", en:"It's outside.", note:"밖에 나가요 = I go outside. 건물 밖에 있어요 = It's outside the building." },
+    { q:"옆 — what does it mean?", kr:"옆에 있어요.", rom:"yeope isseoyo.", en:"It's next to / beside.", note:"커피숍 옆에 있어요 = It's next to the coffee shop." },
+    { q:"사이 — what does it mean?", kr:"사이에 있어요.", rom:"saie isseoyo.", en:"It's between.", note:"두 건물 사이에 있어요 = It's between two buildings." },
+    { q:"오른쪽 — what does it mean?", kr:"오른쪽에 있어요.", rom:"oreunjjoge isseoyo.", en:"It's on the right side.", note:"오른쪽으로 가세요 = Go to the right." },
+    { q:"왼쪽 — what does it mean?", kr:"왼쪽에 있어요.", rom:"oenjjoge isseoyo.", en:"It's on the left side.", note:"왼쪽에 있어요 = It's on the left." },
+    { q:"How do you ask 'what's on the desk?'", kr:"책상 위에 뭐가 있어요?", rom:"Chaeksang wie mwoga isseoyo?", en:"What is on top of the desk?", note:"Answer: 책상 위에 [물건]이/가 있어요." },
+    { q:"How do you say 'there is A and B'?", kr:"[A]하고 [B]이/가 있어요.", rom:"[A]hago [B]i/ga isseoyo.", en:"There is [A] and [B].", note:"하고 = and (between nouns). 이 after consonant, 가 after vowel." },
+    { q:"How do you say 'the book is on the desk'?", kr:"책이 책상 위에 있어요.", rom:"Chaegi chaeksang wie isseoyo.", en:"The book is on the desk.", note:"이/가 = subject marker. 위에 = on top. 있어요 = is/exists." },
+    { q:"How do you say 'the cat is under the chair'?", kr:"고양이가 의자 아래에 있어요.", rom:"Goyangi-ga uija arae-e isseoyo.", en:"The cat is under the chair.", note:"고양이가 = cat (subject). 의자 아래에 = under the chair." },
+    { q:"How do you say 'it's in the bag'?", kr:"가방 안에 있어요.", rom:"Gabang ane isseoyo.", en:"It's inside the bag.", note:"안 = inside. 가방 = bag." },
+    { q:"How do you say 'my phone is on the sofa'?", kr:"제 핸드폰이 소파 위에 있어요.", rom:"Je haendeupon-i sopa wie isseoyo.", en:"My phone is on the sofa.", note:"제 = my (polite). 핸드폰 = cell phone." },
+    { q:"How do you say 'the bathroom is behind the kitchen'?", kr:"화장실이 부엌 뒤에 있어요.", rom:"Hwajangsil-i bueok dwie isseoyo.", en:"The bathroom is behind the kitchen.", note:"화장실 = bathroom. 부엌 = kitchen. 뒤에 = behind." },
+    { q:"How do you say 'the café is next to the bookstore'?", kr:"카페가 서점 옆에 있어요.", rom:"Kape-ga seojeom yeope isseoyo.", en:"The café is next to the bookstore.", note:"옆에 = next to. 서점 = bookstore." },
+    { q:"How do you say 'the keys are not in the bag'?", kr:"열쇠가 가방 안에 없어요.", rom:"Yeolsoe-ga gabang ane eopseoyo.", en:"The keys are not in the bag.", note:"없어요 = not exist / not there. Opposite of 있어요." },
+    { q:"How do you describe where you live in a building?", kr:"저는 3층에 살아요.", rom:"Jeoneun sam cheunge sarayo.", en:"I live on the 3rd floor.", note:"층 = floor. 살아요 = I live (regular present)." },
+    { q:"How do you say 'please put it on the table'?", kr:"탁자 위에 놓아 주세요.", rom:"Takja wie noa juseyo.", en:"Please put it on the table.", note:"놓다 = to place/put. 탁자 = table. 주세요 = please do for me." },
+    { q:"How do you say 'it's between the bed and the desk'?", kr:"침대하고 책상 사이에 있어요.", rom:"Chimdaehago chaeksang saie isseoyo.", en:"It's between the bed and the desk.", note:"하고 = and. 사이에 = between." },
+    { q:"How do you say 'the store is on the first floor'?", kr:"가게가 1층에 있어요.", rom:"Kage-ga il cheunge isseoyo.", en:"The store is on the first floor.", note:"1층 = first floor (ground level in Korea). 가게 = store." },
+    { q:"How do you ask 'where did you put it?'", kr:"어디에 놓았어요?", rom:"Eodie noasseoyo?", en:"Where did you put it?", note:"놓다 = to put/place. 놓았어요 = placed (past tense)." },
+    { q:"How do you say 'it fell under the bed'?", kr:"침대 아래로 떨어졌어요.", rom:"Chimdae araero tteoreojyeosseoyo.", en:"It fell under the bed.", note:"떨어지다 = to fall. 아래로 = toward the bottom." },
+    { q:"How do you say 'to the right of the door'?", kr:"문 오른쪽에 있어요.", rom:"Mun oreunjjoge isseoyo.", en:"It's to the right of the door.", note:"문 = door. 오른쪽에 = on the right side." },
+    { q:"How do you say 'it's not outside, it's inside'?", kr:"밖에 없어요. 안에 있어요.", rom:"Bake eopseoyo. Ane isseoyo.", en:"It's not outside. It's inside.", note:"밖 = outside. 안 = inside. 없어요/있어요 contrast." },
+    { q:"How do you say 'hang it on the wall'?", kr:"벽에 걸어 주세요.", rom:"Byeoge georeo juseyo.", en:"Please hang it on the wall.", note:"벽 = wall. 걸다 = to hang. ~어 주세요 = please do for me." },
+    { q:"How do you say 'the window is next to the door'?", kr:"창문이 문 옆에 있어요.", rom:"Changmun-i mun yeope isseoyo.", en:"The window is next to the door.", note:"창문 = window. 문 = door. 옆에 = next to." },
+    { q:"How do you say 'the remote is behind the sofa cushion'?", kr:"리모컨이 소파 쿠션 뒤에 있어요.", rom:"Rimokeoni sopa kusyon dwie isseoyo.", en:"The remote is behind the sofa cushion.", note:"리모컨 = remote control. 쿠션 = cushion." },
+  ],
+  "House Objects": [
+    { q:"Desk — sentence", kr:"책상이 있어요.", rom:"Chaeksang-i isseoyo.", en:"There is a desk.", note:"책상 위에 뭐가 있어요? = What's on the desk?" },
+    { q:"Laptop — sentence", kr:"노트북 한 대가 있어요.", rom:"Noteubuk han daega isseoyo.", en:"There is one laptop.", note:"Counter 대 is used for machines/electronics/vehicles." },
+    { q:"Plant / Flower pot — sentence", kr:"창문 옆에 화분이 있어요.", rom:"Changmun yeope hwabun-i isseoyo.", en:"There is a plant next to the window.", note:"화분 = flower pot/plant. 창문 = window." },
+    { q:"Picture / Painting — sentence", kr:"벽에 그림이 있어요.", rom:"Byeoge geurim-i isseoyo.", en:"There is a picture on the wall.", note:"그림 = picture/painting. 벽 = wall." },
+    { q:"Picture frame — sentence", kr:"액자 안에 사진이 있어요.", rom:"Aekja ane sajin-i isseoyo.", en:"There is a photo inside the frame.", note:"액자 = picture frame. 사진 = photo." },
+    { q:"Cup / Mug — sentence", kr:"책상 위에 컵 한 잔이 있어요.", rom:"Chaeksang wie keop han jan-i isseoyo.", en:"There is one cup on the desk.", note:"잔 = counter for cups/glasses." },
+    { q:"Pen — sentence", kr:"가방 안에 펜이 있어요.", rom:"Gabang ane pen-i isseoyo.", en:"There is a pen inside the bag.", note:"펜이 있어요? = Is there a pen?" },
+    { q:"Calendar — sentence", kr:"달력이 벽에 있어요.", rom:"Dallyeog-i byeoge isseoyo.", en:"The calendar is on the wall.", note:"달력 = calendar. 벽에 = on the wall." },
+    { q:"Window — sentence", kr:"창문이 소파 옆에 있어요.", rom:"Changmun-i sopa yeope isseoyo.", en:"The window is next to the sofa.", note:"창문 = window." },
+    { q:"Book — sentence", kr:"책상 위에 책이 세 권 있어요.", rom:"Chaeksang wie chaeg-i se gwon isseoyo.", en:"There are three books on the desk.", note:"권 = counter for books/notebooks." },
+    { q:"Sofa — sentence", kr:"거실에 소파가 있어요.", rom:"Geosire sopa-ga isseoyo.", en:"There is a sofa in the living room.", note:"거실 = living room." },
+    { q:"Bed — sentence", kr:"방에 침대가 있어요.", rom:"Bange chimdae-ga isseoyo.", en:"There is a bed in the room.", note:"방 = room. 침대 = bed." },
+    { q:"Refrigerator — sentence", kr:"부엌에 냉장고가 있어요.", rom:"Bueoge naengjanggo-ga isseoyo.", en:"There is a refrigerator in the kitchen.", note:"부엌 = kitchen. 냉장고 = refrigerator." },
+    { q:"Television — sentence", kr:"텔레비전이 거실에 있어요.", rom:"Tellebijeon-i geosire isseoyo.", en:"The television is in the living room.", note:"텔레비전 앞에 소파가 있어요 = The sofa is in front of the TV." },
+    { q:"Dog / Cat — sentence", kr:"방에 강아지 한 마리가 있어요.", rom:"Bange gangaji han mariga isseoyo.", en:"There is one dog in the room.", note:"마리 = counter for animals." },
+    { q:"Counter for machines — 대", kr:"노트북 한 대, 텔레비전 두 대", rom:"noteubuk han dae, tellebijeon du dae", en:"one laptop, two televisions", note:"대 = counter for machines, electronics, vehicles." },
+    { q:"Wardrobe / Closet — sentence", kr:"옷장이 침대 옆에 있어요.", rom:"Otjang-i chimdae yeope isseoyo.", en:"The wardrobe is next to the bed.", note:"옷장 = wardrobe/closet. 옷 = clothes." },
+    { q:"Mirror — sentence", kr:"화장실에 거울이 있어요.", rom:"Hwajangsire geoul-i isseoyo.", en:"There is a mirror in the bathroom.", note:"거울 = mirror. 화장실 = bathroom." },
+    { q:"Lamp — sentence", kr:"책상 옆에 스탠드가 있어요.", rom:"Chaeksang yeope seutaendeu-ga isseoyo.", en:"There is a lamp next to the desk.", note:"스탠드 = desk lamp. 조명 = lighting (general)." },
+    { q:"Blanket / Pillow — sentence", kr:"침대 위에 이불하고 베개가 있어요.", rom:"Chimdae wie ibulhago bege-ga isseoyo.", en:"There is a blanket and pillow on the bed.", note:"이불 = blanket/comforter. 베개 = pillow. 하고 = and." },
+    { q:"Shelf / Bookshelf — sentence", kr:"방에 책장이 있어요.", rom:"Bange chaekjang-i isseoyo.", en:"There is a bookshelf in the room.", note:"책장 = bookshelf. 선반 = shelf (general)." },
+    { q:"How do you say 'there is a notebook and a pencil on the desk'?", kr:"책상 위에 공책하고 연필이 있어요.", rom:"Chaeksang wie gongchaek hago yeonpil-i isseoyo.", en:"On the desk, there is a notebook and a pencil.", note:"하고 = and (between nouns). 이 = subject marker after consonant." },
+    { q:"How do you say 'the remote control is not here'?", kr:"리모컨이 없어요.", rom:"Rimokeoni eopseoyo.", en:"The remote control is not here.", note:"없어요 = does not exist / is not there." },
+    { q:"How do you say 'put the book on the shelf'?", kr:"책을 책장에 넣어 주세요.", rom:"Chaeg-eul chaekjange neeo juseyo.", en:"Please put the book in the bookshelf.", note:"넣다 = to put in. 에 = location particle for destination." },
+    { q:"How do you describe your room?", kr:"제 방에 침대하고 책상이 있어요.", rom:"Je bange chimdaehago chaeksang-i isseoyo.", en:"In my room, there is a bed and a desk.", note:"제 방 = my room. 하고 = and. 이 = subject marker after consonant." },
+    { q:"Air conditioner — sentence", kr:"에어컨이 있어요?", rom:"Eeokeon-i isseoyo?", en:"Is there an air conditioner?", note:"에어컨 = air conditioner. 있어요? = Is there one? (question with rising intonation)." },
+    { q:"Washing machine — sentence", kr:"세탁기가 베란다에 있어요.", rom:"Setakgi-ga beranda-e isseoyo.", en:"The washing machine is on the veranda.", note:"세탁기 = washing machine. 베란다 = balcony/veranda (common in Korean apartments)." },
+    { q:"Trash can — sentence", kr:"쓰레기통이 부엌에 있어요.", rom:"Sseuregitong-i bueoge isseoyo.", en:"The trash can is in the kitchen.", note:"쓰레기통 = trash can/bin. 쓰레기 = trash." },
+    { q:"How do you say 'where is the charger'?", kr:"충전기가 어디에 있어요?", rom:"Chungjeonggi-ga eodie isseoyo?", en:"Where is the charger?", note:"충전기 = charger. 어디에 있어요? = where is it?" },
+    { q:"How do you say 'there are two chairs'?", kr:"의자가 두 개 있어요.", rom:"Uija-ga du gae isseoyo.", en:"There are two chairs.", note:"개 = general object counter. 두 = 2 (native Korean)." },
+  ],
+  "Prices & Quantities": [
+    { q:"How do you ask 'how much?'", kr:"얼마예요?", rom:"Eolmayeyo?", en:"How much is it?", note:"이거 얼마예요? = How much is this?" },
+    { q:"How do you state a price?", kr:"[가격] 원이에요.", rom:"[price] wonieyo.", en:"It is [price] won.", note:"사과 한 개에 4,500원이에요 = One apple is 4,500 won." },
+    { q:"How do you say '1,000 won'?", kr:"천 원이에요.", rom:"Cheon won ieyo.", en:"It is 1,000 won.", note:"천 = 1,000. 만 = 10,000. 오만 원 = 50,000 won." },
+    { q:"How do you say '10,000 won'?", kr:"만 원이에요.", rom:"Man won ieyo.", en:"It is 10,000 won.", note:"만 = 10,000. This is the standard unit in Korean prices." },
+    { q:"Green onion — 1 bunch", kr:"대파 1단에 950원이에요.", rom:"Daepa il dane 950won ieyo.", en:"One bunch of green onion is 950 won.", note:"단 = counter for bundles. Practice: 대파가 얼마예요?" },
+    { q:"Spinach — 1 bunch", kr:"시금치 1단에 950원이에요.", rom:"Sigeumchi il dane 950won ieyo.", en:"One bunch of spinach is 950 won.", note:"Practice: 시금치가 얼마예요? / 950원이에요." },
+    { q:"Apples — 10 pieces", kr:"사과 10개에 4,500원이에요.", rom:"Sagwa sip gaee 4,500won ieyo.", en:"10 apples cost 4,500 won.", note:"개 = general object counter. 사과 한 개에 얼마예요?" },
+    { q:"Pears — 3 pieces", kr:"신고배 3개에 3,950원이에요.", rom:"Singobae sam gaee 3,950won ieyo.", en:"3 pears cost 3,950 won.", note:"개 is used for fruit." },
+    { q:"Squid — 3 animals", kr:"생물오징어 3마리에 3,950원이에요.", rom:"Saengmul ojingeo sam marie 3,950won ieyo.", en:"3 squid cost 3,950 won.", note:"마리 = counter for animals/fish/squid." },
+    { q:"Cappuccino", kr:"카푸치노 한 잔에 5,000원이에요.", rom:"Kapuchino han jane 5,000won ieyo.", en:"One cappuccino is 5,000 won.", note:"커피숍에서 카푸치노를 마셔요." },
+    { q:"Latte", kr:"라떼 한 잔에 5,500원이에요.", rom:"Ratte han jane 5,500won ieyo.", en:"One latte is 5,500 won.", note:"라떼 한 잔 주세요!" },
+    { q:"Hot Chocolate", kr:"핫초코 한 잔에 6,000원이에요.", rom:"Hatchoko han jane 6,000won ieyo.", en:"One hot chocolate is 6,000 won.", note:"핫초코 한 잔 주세요!" },
+    { q:"Green tea", kr:"그린티 한 잔에 5,000원이에요.", rom:"Geurin-ti han jane 5,000won ieyo.", en:"One green tea is 5,000 won.", note:"그린티 한 잔이에요." },
+    { q:"Counter: cups/glasses — 잔", kr:"잔", rom:"jan", en:"counter for cups / glasses", note:"커피 한 잔 = one cup of coffee · 물 두 잔 = two glasses of water" },
+    { q:"Counter: general objects — 개", kr:"개", rom:"gae", en:"counter for general objects", note:"사과 두 개 = two apples · 연필 세 개 = three pencils" },
+    { q:"Counter: animals/fish — 마리", kr:"마리", rom:"mari", en:"counter for animals", note:"고양이 한 마리 = one cat · 오징어 세 마리 = three squid" },
+    { q:"Counter: machines/electronics — 대", kr:"대", rom:"dae", en:"counter for machines / electronics", note:"노트북 한 대 = one laptop · 자동차 두 대 = two cars" },
+    { q:"Counter: books/notebooks — 권", kr:"권", rom:"gwon", en:"counter for books / notebooks", note:"책 한 권 = one book · 노트 두 권 = two notebooks" },
+    { q:"Counter: sheets of paper — 장", kr:"장", rom:"jang", en:"counter for flat sheets", note:"종이 한 장 = one sheet of paper · 사진 두 장 = two photos" },
+    { q:"Counter: bottles — 병", kr:"병", rom:"byeong", en:"counter for bottles", note:"물 한 병 = one bottle of water · 맥주 두 병 = two bottles of beer" },
+    { q:"Counter: pairs of shoes/socks — 켤레", kr:"켤레", rom:"kyeolle", en:"counter for pairs (shoes/socks)", note:"신발 한 켤레 = one pair of shoes · 양말 두 켤레 = two pairs of socks" },
+    { q:"Counter: people (casual) — 명", kr:"명", rom:"myeong", en:"counter for people (casual/neutral)", note:"세 명이에요 = There are 3 people. 가족이 몇 명이에요?" },
+    { q:"Counter: people (formal) — 분", kr:"분", rom:"bun", en:"counter for people (respectful)", note:"세 분이세요? = Is it three people? (used by restaurant staff, etc.)" },
+    { q:"How do you say 'Please give me ___'?", kr:"___ 주세요.", rom:"___ juseyo.", en:"Please give me ___.", note:"커피 한 잔 주세요! = One coffee please! 사과 두 개 주세요." },
+    { q:"How do you ask 'do you have change?'", kr:"거스름돈 있어요?", rom:"Geoseureumddon isseoyo?", en:"Do you have change?", note:"거스름돈 = change (money). 잔돈 is also used." },
+    { q:"How do you say 'I'll pay in cash'?", kr:"현금으로 낼게요.", rom:"Hyeongeum-euro naelgeyo.", en:"I'll pay in cash.", note:"현금 = cash. 카드로 낼게요 = I'll pay by card." },
+    { q:"How do you say 'please give me a receipt'?", kr:"영수증 주세요.", rom:"Yeongsujeung juseyo.", en:"Please give me a receipt.", note:"영수증 = receipt. 주세요 = please give me." },
+    { q:"How do you say 'it's too expensive'?", kr:"너무 비싸요.", rom:"Neomu bissayo.", en:"It's too expensive.", note:"너무 = too (much). 비싸다 = to be expensive → 비싸요." },
+    { q:"How do you say 'do you have something cheaper'?", kr:"더 싼 거 있어요?", rom:"Deo ssan geo isseoyo?", en:"Is there something cheaper?", note:"더 = more. 싸다 = cheap → 싼 (adjective form). 거 = thing." },
+    { q:"How do you ask for a discount?", kr:"깎아 주세요.", rom:"Kkakka juseyo.", en:"Please give me a discount.", note:"깎다 = to reduce/cut. Used at traditional markets (시장). Malls usually don't negotiate." },
+  ],
+};
+
+// No banners — removed per simplification request
+
+const C = {
+  red:"#B83232",redLight:"#F7E8E8",
+  blue:"#1A4F7A",blueLight:"#E8F0F8",blueMid:"#2471A3",
+  bg:"#F4F5F7",card:"#FFFFFF",border:"#DDE1E7",
+  text:"#1C2833",muted:"#6B7280",light:"#EAECEF",
+  green:"#1A6B3A",greenLight:"#E4F4EC",
+};
+
+const SYSTEM_PROMPT = `You are an expert Korean language tutor helping a beginner-intermediate learner. 
+
+Your role:
+1. Have natural conversations in Korean (with English translations in parentheses)
+2. Gently correct grammar/vocabulary mistakes inline
+3. After each user message, provide a JSON feedback block at the END of your response in this exact format:
+---FEEDBACK---
+{"corrections": ["correction1", "correction2"], "praise": ["praise1"], "tip": "one helpful tip", "newWords": ["word1 (meaning)", "word2 (meaning)"], "proficiency": 2}
+---END---
+
+Proficiency scale 1-5. Keep corrections gentle and encouraging. Mix Korean and English naturally for a beginner. Use romanization when introducing new words.`;
+
+const INITIAL_GOALS = [
+  { id:1, text:"Learn 50 common Korean words", done:false },
+  { id:2, text:"Master basic sentence structure (SOV)", done:false },
+  { id:3, text:"Practice Korean greetings & polite speech", done:false },
+];
+
+// B1 Flashcard sub-component
+function B1Card({ card, index, total, onMastered, onAgain }) {
+  const [revealed, setRevealed] = useState(false);
+  const [showExercises, setShowExercises] = useState(false);
+  return (
+    <div>
+      <div style={{ textAlign:"center", marginBottom:8, fontSize:13, color:C.muted }}>{index + 1} / {total}</div>
+      {/* Tap anywhere on card to reveal */}
+      <div
+        onClick={() => { if (!revealed) setRevealed(true); }}
+        style={{ background:"#fff", borderRadius:16, padding:"28px 24px", border:`1.5px solid ${revealed ? C.blue : C.border}`, marginBottom:16, minHeight:200, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", cursor: revealed ? "default" : "pointer", transition:"border-color 0.2s" }}
+      >
+        {!revealed && <div style={{ fontSize:11, color:C.muted, marginBottom:10, letterSpacing:1 }}>TAP TO REVEAL</div>}
+        <div style={{ fontSize:13, fontWeight:600, color:C.muted, marginBottom:12, textTransform:"uppercase", letterSpacing:0.5 }}>{card.q}</div>
+        {revealed && (
+          <div style={{ width:"100%", marginTop:4 }}>
+            <div style={{ fontSize:28, fontWeight:800, color:C.blue, marginBottom:4 }}>{card.kr}</div>
+            <div style={{ fontSize:13, color:C.muted, fontStyle:"italic", marginBottom:6 }}>{card.rom}</div>
+            <div style={{ fontSize:15, fontWeight:600, color:C.text, marginBottom:12 }}>{card.en}</div>
+            {/* Exercises/phrases — hidden behind toggle */}
+            {card.exercises && (
+              <div style={{ marginBottom:8 }} onClick={e=>e.stopPropagation()}>
+                <button onClick={()=>setShowExercises(x=>!x)} style={{ fontSize:12, color:C.blue, background:C.blueLight, border:`1px solid ${C.border}`, borderRadius:8, padding:"4px 12px", cursor:"pointer" }}>
+                  {showExercises ? "Hide exercises ▲" : "All exercises ▼"}
+                </button>
+                {showExercises && (
+                  <div style={{ marginTop:8, textAlign:"left" }}>
+                    {card.exercises.map((ex, i) => (
+                      <div key={i} style={{ fontSize:13, color:C.text, marginBottom:4, padding:"4px 8px", background:C.light, borderRadius:6 }}>{ex}</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Grammar note at bottom */}
+            {card.note && (
+              <div style={{ background:C.blueLight, borderRadius:10, padding:"8px 14px", fontSize:13, color:C.blue, textAlign:"left", lineHeight:1.6, marginTop:4 }}>{card.note}</div>
+            )}
+          </div>
+        )}
+      </div>
+      {revealed && (
+        <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+          <button onClick={() => { setRevealed(false); setShowExercises(false); onAgain(); }} style={{ padding:"12px 28px", background:"#fff", color:C.red, border:`1.5px solid ${C.red}`, borderRadius:12, cursor:"pointer", fontSize:20, lineHeight:1 }}>✕</button>
+          <button onClick={() => { setRevealed(false); setShowExercises(false); onMastered(); }} style={{ padding:"12px 28px", background:"#fff", color:C.green, border:`1.5px solid ${C.green}`, borderRadius:12, cursor:"pointer", fontSize:20, lineHeight:1 }}>✓</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Date/Time reference card sub-component
+function DateTimeCard({ card }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 16px", marginBottom:10, cursor:"pointer" }} onClick={()=>setOpen(x=>!x)}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <div style={{ fontSize:13, fontWeight:600, color:C.text }}>{card.q}</div>
+        <div style={{ fontSize:12, color:C.muted }}>{open?"▲":"▼"}</div>
+      </div>
+      {open && (
+        <div style={{ marginTop:10, borderTop:`1px solid ${C.border}`, paddingTop:10 }}>
+          <div style={{ fontSize:20, fontWeight:800, color:C.blue }}>{card.kr}</div>
+          <div style={{ fontSize:12, color:C.muted, fontStyle:"italic", marginTop:2 }}>{card.rom}</div>
+          <div style={{ fontSize:14, fontWeight:600, color:C.text, marginTop:4 }}>{card.en}</div>
+          {card.note && <div style={{ marginTop:8, fontSize:12, color:C.blue, background:C.blueLight, borderRadius:8, padding:"6px 10px", lineHeight:1.6 }}>{card.note}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [tab, setTab] = useState("Home");
+  const [mode, setMode] = useState("casual");
+  const [messages, setMessages] = useState([{ role:"assistant", text:"안녕하세요! (Hello!) I'm your Korean tutor. Let's start chatting! You can write in English or try some Korean — I'll help you along the way. 😊", feedback:null }]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const todayWord = WORD_OF_THE_DAY[new Date().getDate() % WORD_OF_THE_DAY.length];
+  const [fcCategory, setFcCategory] = useState("🌀 Hybrid");
+  const [fcIndex, setFcIndex] = useState(0);
+  const [fcRevealed, setFcRevealed] = useState(false);
+  // fcMastered: tracks indices of "Got it" cards — used to hide them
+  const [fcMastered, setFcMastered] = useState(EMPTY_PROGRESS());
+  const [fcMissed, setFcMissed] = useState(EMPTY_PROGRESS());
+  const [dailyMastered, setDailyMastered] = useState(EMPTY_PROGRESS());
+  const [dailyMissed, setDailyMissed] = useState(EMPTY_PROGRESS());
+  // Persistent global learned counter (never resets)
+  const [globalLearned, setGlobalLearned] = useState(0);
+  // Shuffle order per category
+  const [fcOrder, setFcOrder] = useState({});
+  // Hide "Got it" cards globally
+  const [hideGotIt, setHideGotIt] = useState(true);
+  // Hint shown for current card
+  const [fcHint, setFcHint] = useState(false);
+  const [gqIndex, setGqIndex] = useState(0);
+  const [gqSelected, setGqSelected] = useState(null);
+  const [gqScore, setGqScore] = useState(0);
+  const [gqDone, setGqDone] = useState(false);
+  // Shuffled grammar questions
+  const [gqOrder, setGqOrder] = useState([]);
+  const [stats, setStats] = useState({ words:3, grammar:30, msgs:1 });
+  const [journal, setJournal] = useState(["Session 1: Started learning Korean basics."]);
+  const [goals, setGoals] = useState(INITIAL_GOALS);
+  const [proficiency, setProficiency] = useState(1);
+  const [b1Sub, setB1Sub] = useState(B1_SUBTABS[0]);
+  const [b1Index, setB1Index] = useState(0);
+  const [b1Mastered, setB1Mastered] = useState({});
+  // B2 state
+  const [b2Sub, setB2Sub] = useState(B2_SUBTABS[0]);
+  const [b2DeckIndex, setB2DeckIndex] = useState(0);
+  const [b2DeckOrder, setB2DeckOrder] = useState([]);
+  const [b2DeckMastered, setB2DeckMastered] = useState({});
+  const [b2DeckHint, setB2DeckHint] = useState(false);
+  const [b2DateIndex, setB2DateIndex] = useState(0);
+  const [b2VocabIndex, setB2VocabIndex] = useState(0);
+  const [b2GqIndex, setB2GqIndex] = useState(0);
+  const [b2GqSelected, setB2GqSelected] = useState(null);
+  const [b2GqScore, setB2GqScore] = useState(0);
+  const [b2GqDone, setB2GqDone] = useState(false);
+  const [b2GqOrder, setB2GqOrder] = useState([]);
+
+  const chatEndRef = useRef(null);
+  const convHistory = useRef([]);
+
+  const profLabels = ["","Beginner","Elementary","Intermediate","Advanced","Fluent"];
+
+  // Shuffle helper
+  const shuffle = (arr) => {
+    const a = [...arr];
+    for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  };
+
+  // Get or create shuffle order for a category
+  const getOrder = (cat, len) => {
+    if (fcOrder[cat] && fcOrder[cat].length === len) return fcOrder[cat];
+    const order = shuffle(Array.from({length:len},(_,i)=>i));
+    setFcOrder(o=>({...o,[cat]:order}));
+    return order;
+  };
+
+  const currentCards = FLASHCARDS[fcCategory] || [];
+  const totalCards = currentCards.length;
+  const masteredSet = new Set(fcMastered[fcCategory] || []);
+
+  // Visible cards — filter out "Got it" if hideGotIt is on
+  const visibleIndices = hideGotIt
+    ? (fcOrder[fcCategory] || Array.from({length:totalCards},(_,i)=>i)).filter(i => !masteredSet.has(i))
+    : (fcOrder[fcCategory] || Array.from({length:totalCards},(_,i)=>i));
+
+  const safeIndex = Math.min(fcIndex, Math.max(0, visibleIndices.length - 1));
+  const currentOriginalIndex = visibleIndices[safeIndex] ?? 0;
+  const currentCard = currentCards[currentOriginalIndex];
+
+  const totalMastered = masteredSet.size;
+  const totalMissed = (fcMissed[fcCategory] || []).length;
+  const dailyMasteredCount = Object.values(dailyMastered).flat().length;
+  const dailyMissedCount = Object.values(dailyMissed).flat().length;
+  const isReverse = REVERSE_CATS.has(fcCategory);
+  const b1Cards = B1_DATA[b1Sub] || [];
+  const b1MasteredCount = Object.keys(b1Mastered).length;
+  const b1TotalCount = Object.values(B1_DATA).flat().length;
+
+  // Grammar quiz shuffled
+  const currentGqOrder = gqOrder.length === GRAMMAR_QUESTIONS.length ? gqOrder : Array.from({length:GRAMMAR_QUESTIONS.length},(_,i)=>i);
+  const currentGq = GRAMMAR_QUESTIONS[currentGqOrder[gqIndex]];
+
+  // B2 deck helpers
+  const b2DeckCards = B2_FLASHCARD_DECKS[b2Sub] || [];
+  const b2DeckMasteredSet = new Set(b2DeckMastered[b2Sub] || []);
+  const b2DeckVisible = (b2DeckOrder.length === b2DeckCards.length ? b2DeckOrder : Array.from({length:b2DeckCards.length},(_,i)=>i))
+    .filter(i => !b2DeckMasteredSet.has(i));
+  const safeB2DeckIndex = Math.min(b2DeckIndex, Math.max(0, b2DeckVisible.length - 1));
+  const currentB2DeckOrigIdx = b2DeckVisible[safeB2DeckIndex] ?? 0;
+  const currentB2Card = b2DeckCards[currentB2DeckOrigIdx];
+
+  // B2 grammar quiz
+  const currentB2GqOrder = b2GqOrder.length === B2_GRAMMAR_QUESTIONS.length ? b2GqOrder : Array.from({length:B2_GRAMMAR_QUESTIONS.length},(_,i)=>i);
+  const currentB2Gq = B2_GRAMMAR_QUESTIONS[currentB2GqOrder[b2GqIndex]];
+
+  const parseFeedback = (text) => {
+    const match = text.match(/---FEEDBACK---\s*([\s\S]*?)\s*---END---/);
+    const clean = text.replace(/---FEEDBACK---[\s\S]*?---END---/, "").trim();
+    let fb = null;
+    if (match) { try { fb = JSON.parse(match[1]); } catch {} }
+    return { clean, feedback: fb };
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = input.trim();
+    setInput("");
+    setMessages(m => [...m, { role:"user", text:userMsg }]);
+    convHistory.current.push({ role:"user", content:userMsg });
+    setLoading(true);
+    setFeedback(null);
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000, system: SYSTEM_PROMPT + (mode==="lesson"?"\n\nLESSON MODE: give structured teaching with examples.":""), messages:convHistory.current }),
+      });
+      const data = await res.json();
+      const raw = data.content?.[0]?.text || "Sorry, couldn't respond.";
+      const { clean, feedback:fb } = parseFeedback(raw);
+      convHistory.current.push({ role:"assistant", content:raw });
+      setMessages(m => [...m, { role:"assistant", text:clean, feedback:fb }]);
+      if (fb) {
+        setFeedback(fb);
+        if (fb.proficiency) setProficiency(fb.proficiency);
+        if (fb.newWords?.length) { setStats(s=>({...s,words:s.words+fb.newWords.length,msgs:s.msgs+1})); setJournal(j=>{const e=`Learned: ${fb.newWords.join(", ")}`;return j.includes(e)?j:[...j,e];}); }
+        if (fb.corrections?.length) setStats(s=>({...s,grammar:Math.min(100,s.grammar+5)}));
+      }
+    } catch { setMessages(m=>[...m,{role:"assistant",text:"Connection error. Please try again.",feedback:null}]); }
+    setLoading(false);
+    setTimeout(()=>chatEndRef.current?.scrollIntoView({behavior:"smooth"}),100);
+  };
+
+  return (
+    <div style={{ fontFamily:"'Segoe UI', sans-serif", background:C.bg, minHeight:"100vh", color:C.text, maxWidth:960, margin:"0 auto" }}>
+      {/* Header */}
+      <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueMid})`, padding:"12px 16px", display:"flex", alignItems:"center", position:"sticky", top:0, zIndex:10 }}>
+        <span style={{ fontSize:24, marginRight:10 }}>🇰🇷</span>
+        <div>
+          <div style={{ fontWeight:800, fontSize:18, color:"#fff", letterSpacing:2 }}>KORHYEAN</div>
+          <div style={{ fontSize:11, color:"#AED6F1" }}>나의 한국어 선생님</div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display:"flex", background:"#fff", borderBottom:`2px solid ${C.border}`, overflowX:"auto", position:"sticky", top:56, zIndex:9 }}>
+        {TABS.map(t=>(
+          <button key={t} onClick={()=>setTab(t)} style={{ padding:"10px 10px", border:"none", cursor:"pointer", fontWeight:600, fontSize:11, background:"transparent", color:tab===t?C.blue:C.muted, borderBottom:tab===t?`3px solid ${C.red}`:"3px solid transparent", whiteSpace:"nowrap", flex:1 }}>{t}</button>
+        ))}
+      </div>
+
+      {/* HOME */}
+      {tab==="Home" && (
+        <div style={{ padding:20 }}>
+          {/* Welcome */}
+          <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueMid})`, borderRadius:16, padding:"24px 20px", marginBottom:20, color:"#fff", textAlign:"center" }}>
+            <div style={{ fontSize:28, fontWeight:800, marginBottom:4, letterSpacing:1 }}>KORHYEAN</div>
+            <div style={{ fontSize:13, opacity:0.85 }}>나의 한국어 선생님 · Your Korean Learning Hub</div>
+          </div>
+
+          {/* Nav buttons — no icons */}
+          <div style={{ fontSize:11, fontWeight:700, color:C.muted, textTransform:"uppercase", letterSpacing:0.5, marginBottom:8 }}>Go To</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:24 }}>
+            {[
+              { label:"Flashcards", desc:"Vocab decks by category", tab:"Flashcards" },
+              { label:"B1 Review", desc:"Class slides & grammar", tab:"B1" },
+              { label:"B2 — 날짜/날씨", desc:"Date, time, weather & more", tab:"B2" },
+              { label:"Grammar Quiz", desc:"Test your grammar", tab:"Grammar" },
+              { label:"Word of the Day", desc:"Daily vocab deep-dive", tab:"Word" },
+              { label:"Chat Tutor", desc:"Practice conversation", tab:"Chat" },
+            ].map(({label,desc,tab:t})=>(
+              <div key={label} onClick={()=>setTab(t)} style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:12, padding:"14px", cursor:"pointer", boxShadow:"0 1px 4px #0001" }}>
+                <div style={{ fontWeight:700, fontSize:13, color:C.blue, marginBottom:2 }}>{label}</div>
+                <div style={{ fontSize:11, color:C.muted }}>{desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Progress */}
+          <div style={{ borderTop:`1px solid ${C.border}`, paddingTop:18 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:C.muted, textTransform:"uppercase", letterSpacing:0.5, marginBottom:12 }}>Progress</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14 }}>
+              <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 14px" }}>
+                <div style={{ fontSize:10, fontWeight:700, color:C.green, textTransform:"uppercase", letterSpacing:0.5, marginBottom:8 }}>Today</div>
+                <div style={{ display:"flex", justifyContent:"space-around" }}>
+                  <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:C.green }}>{dailyMasteredCount}</div><div style={{ fontSize:10, color:C.muted }}>Knew</div></div>
+                  <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:C.red }}>{dailyMissedCount}</div><div style={{ fontSize:10, color:C.muted }}>Again</div></div>
+                  <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:C.blue }}>{stats.msgs}</div><div style={{ fontSize:10, color:C.muted }}>Msgs</div></div>
+                </div>
+              </div>
+              <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 14px" }}>
+                <div style={{ fontSize:10, fontWeight:700, color:C.blue, textTransform:"uppercase", letterSpacing:0.5, marginBottom:8 }}>All Time</div>
+                <div style={{ display:"flex", justifyContent:"space-around" }}>
+                  <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:C.blue }}>{globalLearned}</div><div style={{ fontSize:10, color:C.muted }}>Learned</div></div>
+                  <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:C.green }}>{`${b1MasteredCount}/${b1TotalCount}`}</div><div style={{ fontSize:10, color:C.muted }}>B1</div></div>
+                  <div style={{ textAlign:"center" }}><div style={{ fontSize:20, fontWeight:800, color:C.red }}>{stats.words}</div><div style={{ fontSize:10, color:C.muted }}>Words</div></div>
+                </div>
+              </div>
+            </div>
+            {[
+              { label:"Vocabulary", val:Math.min(100,stats.words*4), color:C.blue },
+              { label:"Grammar", val:stats.grammar, color:C.green },
+              { label:"Flashcards", val:Math.round(Object.values(fcMastered).flat().length/ALL_CARDS.length*100)||0, color:C.blue },
+              { label:"B1 Review", val:Math.round(b1MasteredCount/b1TotalCount*100)||0, color:C.green },
+            ].map(({label,val,color})=>(
+              <div key={label} style={{ marginBottom:10 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:3 }}>
+                  <span style={{ color:C.muted }}>{label}</span><span style={{ color, fontWeight:700 }}>{val}%</span>
+                </div>
+                <div style={{ height:6, background:C.light, borderRadius:10, overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${val}%`, background:color, borderRadius:10 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CHAT */}
+      {tab==="Chat" && (
+        <div style={{ display:"flex", height:"calc(100vh - 108px)" }}>
+          <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+            <div style={{ padding:"8px 12px", background:"#fff", display:"flex", gap:8, borderBottom:`1px solid ${C.border}` }}>
+              {["casual","lesson"].map(m=>(
+                <button key={m} onClick={()=>setMode(m)} style={{ padding:"4px 14px", borderRadius:20, border:`1.5px solid ${mode===m?C.blue:C.border}`, background:mode===m?C.blueLight:"#fff", color:mode===m?C.blue:C.muted, fontWeight:600, fontSize:12, cursor:"pointer" }}>
+                  {m==="casual"?"💬 Casual":"📚 Lesson"}
+                </button>
+              ))}
+            </div>
+            <div style={{ flex:1, overflowY:"auto", padding:12, display:"flex", flexDirection:"column", gap:10 }}>
+              {messages.map((m,i)=>(
+                <div key={i} style={{ display:"flex", flexDirection:m.role==="user"?"row-reverse":"row", gap:6 }}>
+                  <div style={{ maxWidth:"75%", background:m.role==="user"?C.redLight:"#fff", borderRadius:m.role==="user"?"16px 4px 16px 16px":"4px 16px 16px 16px", padding:"10px 14px", fontSize:14, lineHeight:1.6, border:`1px solid ${m.role==="user"?"#F1948A":C.border}` }}>{m.text}</div>
+                </div>
+              ))}
+              {loading && <div style={{ fontSize:13, color:C.muted }}>튜터가 답변 중… ✍️</div>}
+              <div ref={chatEndRef} />
+            </div>
+            {feedback && (
+              <div style={{ background:C.blueLight, borderTop:`1px solid #AED6F1`, padding:"8px 12px", fontSize:12 }}>
+                {feedback.praise?.[0] && <div style={{ color:C.green }}>✅ {feedback.praise[0]}</div>}
+                {feedback.corrections?.[0] && <div style={{ color:C.red, marginTop:2 }}>💡 {feedback.corrections[0]}</div>}
+                {feedback.tip && <div style={{ color:C.blue, marginTop:2 }}>🔑 {feedback.tip}</div>}
+              </div>
+            )}
+            <div style={{ padding:"10px 12px", background:"#fff", borderTop:`1px solid ${C.border}`, display:"flex", gap:8 }}>
+              <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMessage()} placeholder="Type in Korean or English…" style={{ flex:1, background:C.bg, border:`1.5px solid ${C.border}`, borderRadius:12, padding:"10px 14px", fontSize:14, outline:"none" }} />
+              <button onClick={sendMessage} disabled={loading} style={{ padding:"10px 16px", background:loading?C.muted:C.blue, color:"#fff", border:"none", borderRadius:12, cursor:"pointer", fontWeight:700, fontSize:16 }}>→</button>
+            </div>
+          </div>
+          <div style={{ width:220, background:"#fff", borderLeft:`1px solid ${C.border}`, padding:14, overflowY:"auto", display:"flex", flexDirection:"column", gap:12 }}>
+            <div style={{ fontWeight:700, fontSize:13, color:C.blue }}>📡 Live Feedback</div>
+            {!feedback ? <div style={{ fontSize:12, color:C.muted }}>Send a message to get feedback…</div> : (
+              <>
+                {feedback.corrections?.length>0 && <div><div style={{ fontSize:11, fontWeight:700, color:C.red, marginBottom:4 }}>CORRECTIONS</div>{feedback.corrections.map((c,i)=><div key={i} style={{ fontSize:12, color:C.text, marginBottom:4, background:C.redLight, borderRadius:8, padding:"4px 8px" }}>💡 {c}</div>)}</div>}
+                {feedback.praise?.length>0 && <div><div style={{ fontSize:11, fontWeight:700, color:C.green, marginBottom:4 }}>PRAISE</div>{feedback.praise.map((p,i)=><div key={i} style={{ fontSize:12, color:C.text, marginBottom:4, background:C.greenLight, borderRadius:8, padding:"4px 8px" }}>✅ {p}</div>)}</div>}
+                {feedback.tip && <div><div style={{ fontSize:11, fontWeight:700, color:C.blue, marginBottom:4 }}>TIP</div><div style={{ fontSize:12, color:C.text, background:C.blueLight, borderRadius:8, padding:"4px 8px" }}>🔑 {feedback.tip}</div></div>}
+                {feedback.newWords?.length>0 && <div><div style={{ fontSize:11, fontWeight:700, color:C.blue, marginBottom:4 }}>NEW WORDS</div>{feedback.newWords.map((w,i)=><div key={i} style={{ fontSize:12, color:C.text, marginBottom:4, background:C.blueLight, borderRadius:8, padding:"4px 8px" }}>{w}</div>)}</div>}
+              </>
+            )}
+            <div style={{ marginTop:"auto" }}>
+              <div style={{ fontSize:11, fontWeight:700, color:C.blue, marginBottom:8 }}>🎯 GOALS</div>
+              {goals.map(g=>(
+                <div key={g.id} onClick={()=>setGoals(gs=>gs.map(x=>x.id===g.id?{...x,done:!x.done}:x))} style={{ fontSize:11, color:g.done?C.green:C.muted, marginBottom:6, cursor:"pointer", display:"flex", gap:6, alignItems:"flex-start" }}>
+                  <span>{g.done?"✅":"⬜"}</span><span style={{ textDecoration:g.done?"line-through":"none" }}>{g.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FLASHCARDS */}
+      {tab==="Flashcards" && (
+        <div style={{ padding:16 }}>
+          {/* Category pills */}
+          <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:8, marginBottom:12 }}>
+            {ALL_CATS.map(cat=>(
+              <button key={cat} onClick={()=>{
+                setFcCategory(cat);
+                setFcIndex(0);
+                setFcRevealed(false);
+                setFcHint(false);
+                // Shuffle on category change
+                const len = (FLASHCARDS[cat]||[]).length;
+                setFcOrder(o=>({...o,[cat]:shuffle(Array.from({length:len},(_,i)=>i))}));
+              }} style={{ padding:"6px 14px", borderRadius:20, border:`1.5px solid ${fcCategory===cat?C.blue:C.border}`, background:fcCategory===cat?C.blueLight:"#fff", color:fcCategory===cat?C.blue:C.muted, fontWeight:600, fontSize:12, cursor:"pointer", whiteSpace:"nowrap" }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Reverse mode badge */}
+          {isReverse && (
+            <div style={{ background:C.blueLight, border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 12px", fontSize:12, color:C.blue, marginBottom:10 }}>
+              Reverse mode — English shown, guess the Korean
+            </div>
+          )}
+
+          {/* Controls row */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+            <div style={{ fontSize:13, color:C.muted }}>
+              {visibleIndices.length > 0 ? `${safeIndex+1} / ${visibleIndices.length}` : "All done!"} · <span style={{ color:C.green }}>{totalMastered} knew</span>
+            </div>
+            <div style={{ display:"flex", gap:6 }}>
+              <button onClick={()=>{
+                setFcMastered(p=>({...p,[fcCategory]:[]}));
+              }} style={{ fontSize:11, padding:"4px 10px", background:"none", border:`1px solid ${C.border}`, borderRadius:8, cursor:"pointer", color:C.muted }}>Reset ✓</button>
+              <div style={{ fontSize:11, padding:"4px 10px", background:C.blueLight, borderRadius:8, color:C.blue, fontWeight:700 }}>
+                🎓 {globalLearned} learned
+              </div>
+            </div>
+          </div>
+
+          {visibleIndices.length > 0 && currentCard ? (
+            <>
+              {/* Card — tap to reveal */}
+              <div
+                onClick={() => { if (!fcRevealed) { setFcRevealed(true); setFcHint(false); } }}
+                style={{ background:"#fff", borderRadius:16, padding:"32px 24px", textAlign:"center", border:`1.5px solid ${fcRevealed?C.blue:C.border}`, marginBottom:14, minHeight:180, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", position:"relative", transition:"border-color 0.2s", cursor: fcRevealed ? "default" : "pointer" }}
+              >
+                {!fcRevealed && <div style={{ fontSize:11, color:C.muted, marginBottom:8, letterSpacing:1 }}>TAP TO REVEAL</div>}
+                {isReverse ? (
+                  <>
+                    <div style={{ fontSize:11, fontWeight:600, color:C.muted, textTransform:"uppercase", letterSpacing:0.5, marginBottom:8 }}>
+                      {fcCategory === "Conversations" ? (currentCard.level?.toUpperCase() || "PHRASE") : "ENGLISH"}
+                    </div>
+                    <div style={{ fontSize:fcCategory==="Conversations"?17:24, fontWeight:700, color:C.text, marginBottom:8, lineHeight:1.4 }}>
+                      {currentCard.en}
+                    </div>
+                    {/* Hint */}
+                    {!fcRevealed && (
+                      <div style={{ display:"flex", gap:8, marginTop:4 }}>
+                        {!fcHint && FC_EXAMPLES[currentCard.kr] && (
+                          <button onClick={e=>{e.stopPropagation();setFcHint(true);}} style={{ fontSize:11, padding:"4px 10px", background:"none", border:`1px solid ${C.border}`, borderRadius:8, cursor:"pointer", color:C.muted }}>hint</button>
+                        )}
+                        {fcHint && FC_EXAMPLES[currentCard.kr] && (
+                          <div style={{ fontSize:12, color:C.muted, fontStyle:"italic", background:C.light, borderRadius:8, padding:"4px 10px" }}>{FC_EXAMPLES[currentCard.kr].kr}</div>
+                        )}
+                      </div>
+                    )}
+                    {fcRevealed && (
+                      <div style={{ marginTop:10, borderTop:`1px solid ${C.border}`, paddingTop:10, width:"100%" }}>
+                        <div style={{ fontSize:fcCategory==="Conversations"?20:32, fontWeight:800, color:C.blue, marginBottom:4 }}>{currentCard.kr}</div>
+                        <div style={{ fontSize:13, color:C.muted, fontStyle:"italic", marginBottom:6 }}>{currentCard.rom}</div>
+                        {FC_EXAMPLES[currentCard.kr] && (
+                          <div style={{ background:C.blueLight, borderRadius:8, padding:"6px 10px", fontSize:12, color:C.blue, textAlign:"left", marginTop:4 }}>
+                            <div style={{ fontWeight:600 }}>{FC_EXAMPLES[currentCard.kr].kr}</div>
+                            <div style={{ color:C.muted, marginTop:2 }}>{FC_EXAMPLES[currentCard.kr].en}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize:36, fontWeight:800, color:C.blue, marginBottom:8 }}>{currentCard.kr}</div>
+                    <div style={{ fontSize:14, color:C.muted }}>{currentCard.rom}</div>
+                    {/* Hint */}
+                    {!fcRevealed && (
+                      <div style={{ marginTop:8, display:"flex", gap:8, justifyContent:"center" }}>
+                        {!fcHint && FC_EXAMPLES[currentCard.kr] && (
+                          <button onClick={e=>{e.stopPropagation();setFcHint(true);}} style={{ fontSize:11, padding:"4px 10px", background:"none", border:`1px solid ${C.border}`, borderRadius:8, cursor:"pointer", color:C.muted }}>hint</button>
+                        )}
+                        {fcHint && FC_EXAMPLES[currentCard.kr] && (
+                          <div style={{ fontSize:12, color:C.muted, fontStyle:"italic", background:C.light, borderRadius:8, padding:"4px 10px" }}>{FC_EXAMPLES[currentCard.kr].kr}</div>
+                        )}
+                      </div>
+                    )}
+                    {fcRevealed && (
+                      <div style={{ marginTop:12, borderTop:`1px solid ${C.border}`, paddingTop:10, width:"100%", textAlign:"center" }}>
+                        <div style={{ fontSize:18, fontWeight:600, color:C.text, marginBottom:6 }}>{currentCard.en}</div>
+                        {FC_EXAMPLES[currentCard.kr] && (
+                          <div style={{ background:C.blueLight, borderRadius:8, padding:"6px 10px", fontSize:12, color:C.blue, textAlign:"left" }}>
+                            <div style={{ fontWeight:600 }}>{FC_EXAMPLES[currentCard.kr].kr}</div>
+                            <div style={{ color:C.muted, marginTop:2 }}>{FC_EXAMPLES[currentCard.kr].en}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* ✕ / ✓ buttons — only shown after reveal */}
+              {fcRevealed && (
+                <div style={{ display:"flex", gap:10, justifyContent:"center", marginBottom:12 }}>
+                  <button onClick={()=>{
+                    setFcMissed(p=>{const arr=[...(p[fcCategory]||[])];if(!arr.includes(currentOriginalIndex))arr.push(currentOriginalIndex);return{...p,[fcCategory]:arr}});
+                    setDailyMissed(p=>{const arr=[...(p[fcCategory]||[])];if(!arr.includes(currentOriginalIndex))arr.push(currentOriginalIndex);return{...p,[fcCategory]:arr}});
+                    setFcMastered(p=>{const arr=(p[fcCategory]||[]).filter((x) =>x!==currentOriginalIndex);return{...p,[fcCategory]:arr}});
+                    setFcIndex(i=>(i+1)%Math.max(1,visibleIndices.length));setFcRevealed(false);setFcHint(false);
+                  }} style={{ padding:"12px 32px", background:"#fff", color:C.red, border:`1.5px solid ${C.red}`, borderRadius:12, cursor:"pointer", fontSize:22, lineHeight:1 }}>✕</button>
+                  <button onClick={()=>{
+                    const alreadyMastered = masteredSet.has(currentOriginalIndex);
+                    setFcMastered(p=>{const arr=[...(p[fcCategory]||[])];if(!arr.includes(currentOriginalIndex))arr.push(currentOriginalIndex);return{...p,[fcCategory]:arr}});
+                    setDailyMastered(p=>{const arr=[...(p[fcCategory]||[])];if(!arr.includes(currentOriginalIndex))arr.push(currentOriginalIndex);return{...p,[fcCategory]:arr}});
+                    setFcMissed(p=>{const arr=(p[fcCategory]||[]).filter((x) =>x!==currentOriginalIndex);return{...p,[fcCategory]:arr}});
+                    if (!alreadyMastered) setGlobalLearned(n=>n+1);
+                    setFcIndex(i=>(i)%Math.max(1,visibleIndices.length));setFcRevealed(false);setFcHint(false);
+                  }} style={{ padding:"12px 32px", background:"#fff", color:C.green, border:`1.5px solid ${C.green}`, borderRadius:12, cursor:"pointer", fontSize:22, lineHeight:1 }}>✓</button>
+                </div>
+              )}
+
+              {/* Prev/Next */}
+              <div style={{ display:"flex", justifyContent:"center", gap:8, marginBottom:16 }}>
+                <button onClick={()=>{setFcIndex(i=>(i-1+visibleIndices.length)%Math.max(1,visibleIndices.length));setFcRevealed(false);setFcHint(false);}} style={{ padding:"7px 18px", background:C.light, border:"none", borderRadius:10, cursor:"pointer", color:C.text, fontSize:13 }}>← Prev</button>
+                <button onClick={()=>{setFcIndex(i=>(i+1)%Math.max(1,visibleIndices.length));setFcRevealed(false);setFcHint(false);}} style={{ padding:"7px 18px", background:C.light, border:"none", borderRadius:10, cursor:"pointer", color:C.text, fontSize:13 }}>Next →</button>
+              </div>
+
+              {/* Dots at bottom */}
+              <div style={{ display:"flex", flexWrap:"wrap", gap:4, justifyContent:"center" }}>
+                {visibleIndices.map((origI,i)=>{
+                  const missed=(fcMissed[fcCategory]||[]).includes(origI);
+                  const isCurrent=i===safeIndex;
+                  return <div key={origI} onClick={()=>{setFcIndex(i);setFcRevealed(false);setFcHint(false);}} style={{ width:isCurrent?13:9, height:isCurrent?13:9, borderRadius:"50%", background:missed?C.red:"#CBD5E1", border:isCurrent?`2px solid ${C.blue}`:"2px solid transparent", cursor:"pointer", transition:"all 0.15s", flexShrink:0 }} />;
+                })}
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign:"center", padding:32 }}>
+              <div style={{ fontSize:40 }}>🎉</div>
+              <div style={{ fontWeight:700, color:C.blue, fontSize:16, marginTop:8 }}>All cards learned in this deck!</div>
+              <button onClick={()=>setFcMastered(p=>({...p,[fcCategory]:[]}))} style={{ marginTop:16, padding:"10px 24px", background:C.blue, color:"#fff", border:"none", borderRadius:10, cursor:"pointer", fontWeight:600 }}>Reset & Reshuffle</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* GRAMMAR */}
+      {tab==="Grammar" && (
+        <div style={{ padding:16 }}>
+          <h2 style={{ color:C.blue, fontSize:18, marginBottom:16 }}>📝 Grammar Quiz</h2>
+          {!gqDone ? (
+            <>
+              <div style={{ background:"#fff", borderRadius:16, padding:20, border:`1px solid ${C.border}`, marginBottom:16 }}>
+                <div style={{ fontSize:13, color:C.muted, marginBottom:8 }}>Question {gqIndex+1} of {GRAMMAR_QUESTIONS.length}</div>
+                <div style={{ fontWeight:700, fontSize:16, color:C.text, marginBottom:16 }}>{currentGq.q}</div>
+                {currentGq.opts.map((opt,i)=>(
+                  <button key={i} onClick={()=>{if(gqSelected!==null)return;setGqSelected(i);if(i===currentGq.ans)setGqScore(s=>s+1);}}
+                    style={{ display:"block", width:"100%", padding:"10px 16px", marginBottom:8, borderRadius:12, border:`1.5px solid ${gqSelected===null?C.border:i===currentGq.ans?"#1E8449":i===gqSelected?C.red:C.border}`, background:gqSelected===null?"#fff":i===currentGq.ans?"#D5F5E3":i===gqSelected?C.redLight:"#fff", cursor:gqSelected===null?"pointer":"default", textAlign:"left", fontSize:14, fontWeight:500 }}>
+                    {opt}
+                  </button>
+                ))}
+                {gqSelected!==null && <div style={{ background:C.blueLight, borderRadius:10, padding:"10px 14px", fontSize:13, color:C.blue, marginTop:8 }}>💡 {currentGq.exp}</div>}
+              </div>
+              {gqSelected!==null && <button onClick={()=>{if(gqIndex+1>=GRAMMAR_QUESTIONS.length){setGqDone(true);setStats(s=>({...s,grammar:Math.min(100,s.grammar+10)}))}else{setGqIndex(i=>i+1);setGqSelected(null);}}} style={{ padding:"12px 28px", background:C.blue, border:"none", borderRadius:12, color:"#fff", cursor:"pointer", fontWeight:700, fontSize:15 }}>{gqIndex+1>=GRAMMAR_QUESTIONS.length?"Finish":"Next Question →"}</button>}
+            </>
+          ) : (
+            <div style={{ textAlign:"center", padding:32 }}>
+              <div style={{ fontSize:52 }}>{gqScore>=Math.round(GRAMMAR_QUESTIONS.length*0.85)?"🏆":gqScore>=Math.round(GRAMMAR_QUESTIONS.length*0.6)?"⭐":"📚"}</div>
+              <div style={{ fontSize:30, fontWeight:700, color:C.blue, marginTop:12 }}>{gqScore}/{GRAMMAR_QUESTIONS.length}</div>
+              <div style={{ color:C.muted, marginTop:8 }}>{gqScore===GRAMMAR_QUESTIONS.length?"Perfect! 대단해요!":"Keep going! 화이팅!"}</div>
+              <button onClick={()=>{
+                setGqOrder(shuffle(Array.from({length:GRAMMAR_QUESTIONS.length},(_,i)=>i)));
+                setGqIndex(0);setGqSelected(null);setGqScore(0);setGqDone(false);
+              }} style={{ marginTop:20, padding:"12px 28px", background:C.red, border:"none", borderRadius:12, color:"#fff", cursor:"pointer", fontWeight:700, fontSize:15 }}>Try Again</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* WORD OF THE DAY */}
+      {tab==="Word" && (
+        <div style={{ padding:16, maxWidth:560, margin:"0 auto" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+            <h2 style={{ color:C.blue, fontSize:18, margin:0 }}>✨ Word of the Day</h2>
+            <div style={{ background:C.blueLight, color:C.blue, borderRadius:20, padding:"3px 12px", fontSize:12, fontWeight:600 }}>{new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
+          </div>
+          <div style={{ background:`linear-gradient(135deg,${C.blue},${C.blueMid})`, borderRadius:20, padding:"28px 24px", textAlign:"center", marginBottom:14, boxShadow:"0 4px 20px #1A527622" }}>
+            <div style={{ fontSize:44, fontWeight:800, color:"#fff", letterSpacing:1 }}>{todayWord.kr}</div>
+            <div style={{ fontSize:16, color:"#AED6F1", marginTop:6 }}>{todayWord.rom}</div>
+            <div style={{ marginTop:12, background:"rgba(255,255,255,0.15)", borderRadius:12, padding:"8px 18px", display:"inline-block" }}>
+              <span style={{ fontSize:15, color:"#fff", fontWeight:600 }}>{todayWord.en}</span>
+            </div>
+          </div>
+          <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:C.red, marginBottom:6, textTransform:"uppercase", letterSpacing:0.5 }}>📜 Word Origin</div>
+            <div style={{ fontSize:14, color:C.text, lineHeight:1.7 }}>{todayWord.origin}</div>
+          </div>
+          <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:C.red, marginBottom:8, textTransform:"uppercase", letterSpacing:0.5 }}>💡 When to Use It</div>
+            {todayWord.uses.map((u,i)=>(
+              <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:8, marginBottom:4 }}>
+                <div style={{ width:6, height:6, borderRadius:"50%", background:C.blue, flexShrink:0, marginTop:6 }} />
+                <span style={{ fontSize:14, color:C.text, lineHeight:1.6 }}>{u}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:14, padding:"14px 16px", marginBottom:10 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:C.red, marginBottom:10, textTransform:"uppercase", letterSpacing:0.5 }}>🗣️ Example Sentences</div>
+            {todayWord.examples.map((ex,i)=>(
+              <div key={i} style={{ background:C.blueLight, borderRadius:12, padding:"12px 14px", borderLeft:`3px solid ${C.blue}`, marginBottom:8 }}>
+                <div style={{ fontSize:15, fontWeight:700, color:C.blue, marginBottom:3 }}>{ex.kr}</div>
+                <div style={{ fontSize:12, color:C.blueMid, marginBottom:4, fontStyle:"italic" }}>{ex.rom}</div>
+                <div style={{ fontSize:13, color:C.text }}>{ex.en}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background:"#FFFBEB", border:"1px solid #FCD34D", borderRadius:14, padding:"14px 16px" }}>
+            <div style={{ fontSize:12, fontWeight:700, color:"#92400E", marginBottom:6, textTransform:"uppercase", letterSpacing:0.5 }}>🌟 Pro Tip</div>
+            <div style={{ fontSize:14, color:"#78350F", lineHeight:1.7 }}>{todayWord.tip}</div>
+          </div>
+        </div>
+      )}
+
+      {/* B1 REVIEW */}
+      {tab==="B1" && (
+        <div style={{ padding:16 }}>
+          {/* Header */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+            <div>
+              <h2 style={{ color:C.blue, fontSize:17, margin:0, fontWeight:700 }}>B1 Class Review</h2>
+              <div style={{ fontSize:12, color:C.muted, marginTop:2 }}>세종실용한국어 1</div>
+            </div>
+            <div style={{ background:C.blueLight, color:C.blue, borderRadius:16, padding:"4px 12px", fontSize:12, fontWeight:600 }}>
+              {b1MasteredCount}/{b1TotalCount}
+            </div>
+          </div>
+
+          {/* Subtabs */}
+          <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:8, marginBottom:16 }}>
+            {B1_SUBTABS.map(st=>(
+              <button key={st} onClick={()=>{setB1Sub(st);setB1Index(0);}} style={{ padding:"6px 12px", borderRadius:16, border:`1.5px solid ${b1Sub===st?C.blue:C.border}`, background:b1Sub===st?C.blueLight:"#fff", color:b1Sub===st?C.blue:C.muted, fontWeight:600, fontSize:11, cursor:"pointer", whiteSpace:"nowrap" }}>
+                {st}
+              </button>
+            ))}
+          </div>
+
+          {/* Flashcard */}
+          {b1Cards.length > 0 && (
+            <B1Card
+              card={b1Cards[b1Index]}
+              index={b1Index}
+              total={b1Cards.length}
+              onMastered={()=>{ setB1Mastered(p=>({...p,[b1Sub+"_"+b1Index]:true})); setB1Index(i=>(i+1)%b1Cards.length); }}
+              onAgain={()=>setB1Index(i=>(i+1)%b1Cards.length)}
+            />
+          )}
+
+          {/* Nav */}
+          <div style={{ display:"flex", justifyContent:"center", gap:8, marginTop:14 }}>
+            <button onClick={()=>setB1Index(i=>(i-1+b1Cards.length)%b1Cards.length)} style={{ padding:"8px 20px", background:C.light, border:"none", borderRadius:10, cursor:"pointer", color:C.text, fontWeight:600 }}>← Prev</button>
+            <button onClick={()=>setB1Index(i=>(i+1)%b1Cards.length)} style={{ padding:"8px 20px", background:C.light, border:"none", borderRadius:10, cursor:"pointer", color:C.text, fontWeight:600 }}>Next →</button>
+          </div>
+        </div>
+      )}
+
+      {/* B2 */}
+      {tab==="B2" && (
+        <div style={{ padding:16 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+            <div>
+              <h2 style={{ color:C.blue, fontSize:17, margin:0, fontWeight:700 }}>B2 — 날짜·날씨·시간</h2>
+              <div style={{ fontSize:12, color:C.muted, marginTop:2 }}>Date, Time, Weather & More</div>
+            </div>
+            <div style={{ background:C.blueLight, color:C.blue, borderRadius:16, padding:"4px 12px", fontSize:12, fontWeight:600 }}>
+              {Object.values(b2DeckMastered).flat().length} learned
+            </div>
+          </div>
+
+          {/* Subtabs */}
+          <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:8, marginBottom:16 }}>
+            {B2_SUBTABS.map(st=>(
+              <button key={st} onClick={()=>{
+                setB2Sub(st);setB2DeckIndex(0);setB2DeckHint(false);
+                const len=(B2_FLASHCARD_DECKS[st]||[]).length;
+                if(len>0) setB2DeckOrder(shuffle(Array.from({length:len},(_,i)=>i)));
+              }} style={{ padding:"6px 12px", borderRadius:16, border:`1.5px solid ${b2Sub===st?C.blue:C.border}`, background:b2Sub===st?C.blueLight:"#fff", color:b2Sub===st?C.blue:C.muted, fontWeight:600, fontSize:11, cursor:"pointer", whiteSpace:"nowrap" }}>
+                {st}
+              </button>
+            ))}
+          </div>
+
+          {/* Flashcard decks */}
+          {B2_FLASHCARD_DECKS[b2Sub] && b2DeckVisible.length > 0 && currentB2Card && (
+            <>
+              <div style={{ fontSize:12, color:C.muted, marginBottom:8 }}>
+                {safeB2DeckIndex+1} / {b2DeckVisible.length} · <span style={{ color:C.green }}>{b2DeckMasteredSet.size} knew</span>
+              </div>
+              <B2FlashCard
+                card={currentB2Card}
+                showHint={b2DeckHint}
+                onHint={()=>setB2DeckHint(true)}
+                onMastered={()=>{
+                  setB2DeckMastered(p=>{const arr=[...(p[b2Sub]||[])];if(!arr.includes(currentB2DeckOrigIdx))arr.push(currentB2DeckOrigIdx);return{...p,[b2Sub]:arr};});
+                  setGlobalLearned(n=>n+1);
+                  setB2DeckIndex(i=>(i)%Math.max(1,b2DeckVisible.length));
+                  setB2DeckHint(false);
+                }}
+                onAgain={()=>{setB2DeckIndex(i=>(i+1)%Math.max(1,b2DeckVisible.length));setB2DeckHint(false);}}
+                isGotIt={false}
+              />
+              <div style={{ display:"flex", justifyContent:"center", gap:8, marginTop:8 }}>
+                <button onClick={()=>{setB2DeckIndex(i=>(i-1+b2DeckVisible.length)%Math.max(1,b2DeckVisible.length));setB2DeckHint(false);}} style={{ padding:"7px 18px", background:C.light, border:"none", borderRadius:10, cursor:"pointer", color:C.text, fontSize:13 }}>← Prev</button>
+                <button onClick={()=>{setB2DeckIndex(i=>(i+1)%Math.max(1,b2DeckVisible.length));setB2DeckHint(false);}} style={{ padding:"7px 18px", background:C.light, border:"none", borderRadius:10, cursor:"pointer", color:C.text, fontSize:13 }}>Next →</button>
+              </div>
+              <div style={{ display:"flex", gap:6, justifyContent:"center", marginTop:12 }}>
+                <button onClick={()=>{setB2DeckMastered(p=>({...p,[b2Sub]:[]}))} } style={{ fontSize:11, padding:"4px 10px", background:"none", border:`1px solid ${C.border}`, borderRadius:8, cursor:"pointer", color:C.muted }}>Reset ✓</button>
+              </div>
+            </>
+          )}
+          {B2_FLASHCARD_DECKS[b2Sub] && b2DeckVisible.length === 0 && (
+            <div style={{ textAlign:"center", padding:24 }}>
+              <div style={{ fontSize:36 }}>🎉</div>
+              <div style={{ fontWeight:700, color:C.blue, marginTop:8 }}>All cards mastered!</div>
+              <button onClick={()=>setB2DeckMastered(p=>({...p,[b2Sub]:[]}))} style={{ marginTop:12, padding:"10px 20px", background:C.blue, color:"#fff", border:"none", borderRadius:10, cursor:"pointer", fontWeight:600 }}>Reset</button>
+            </div>
+          )}
+
+          {/* Date & Time cards (시간 Time / 날짜 Date subtabs) */}
+          {b2Sub==="시간 Time" && (
+            <div style={{ marginTop:16 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:C.blue, marginBottom:8 }}>⏰ Date & Time Reference Cards</div>
+              {B2_DATE_TIME_CARDS.filter(c=>c.q.includes("시") || c.q.includes("time") || c.q.includes("hour") || c.q.includes("minute") || c.q.includes("AM") || c.q.includes("PM") || c.q.includes("half")).map((card,i)=>(
+                <DateTimeCard key={i} card={card} />
+              ))}
+            </div>
+          )}
+          {b2Sub==="날짜 Date" && (
+            <div style={{ marginTop:16 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:C.blue, marginBottom:8 }}>📅 Date Reference Cards</div>
+              {B2_DATE_TIME_CARDS.filter(c=>c.q.includes("month") || c.q.includes("date") || c.q.includes("year") || c.q.includes("day") || c.q.includes("생일") || c.q.includes("고향")).map((card,i)=>(
+                <DateTimeCard key={i} card={card} />
+              ))}
+            </div>
+          )}
+          {b2Sub==="시간 입자 Time Particle" && (
+            <div style={{ marginTop:16 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:C.blue, marginBottom:8 }}>📌 Time Particle 에 Rules</div>
+              {B2_VOCAB_CARDS.map((card,i)=>(
+                <DateTimeCard key={i} card={card} />
+              ))}
+            </div>
+          )}
+
+          {/* B2 Grammar Quiz */}
+          {b2Sub==="안/지않다 Negation" && (
+            <div style={{ marginTop:20 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:C.blue, marginBottom:8 }}>🧠 B2 Grammar Quiz</div>
+              {!b2GqDone ? (
+                <>
+                  <div style={{ background:"#fff", borderRadius:16, padding:20, border:`1px solid ${C.border}`, marginBottom:12 }}>
+                    <div style={{ fontSize:12, color:C.muted, marginBottom:6 }}>Question {b2GqIndex+1} of {B2_GRAMMAR_QUESTIONS.length}</div>
+                    <div style={{ fontWeight:700, fontSize:15, color:C.text, marginBottom:14 }}>{currentB2Gq.q}</div>
+                    {currentB2Gq.opts.map((opt,i)=>(
+                      <button key={i} onClick={()=>{if(b2GqSelected!==null)return;setB2GqSelected(i);if(i===currentB2Gq.ans)setB2GqScore(s=>s+1);}}
+                        style={{ display:"block", width:"100%", padding:"9px 14px", marginBottom:7, borderRadius:10, border:`1.5px solid ${b2GqSelected===null?C.border:i===currentB2Gq.ans?"#1E8449":i===b2GqSelected?C.red:C.border}`, background:b2GqSelected===null?"#fff":i===currentB2Gq.ans?"#D5F5E3":i===b2GqSelected?C.redLight:"#fff", cursor:b2GqSelected===null?"pointer":"default", textAlign:"left", fontSize:13 }}>
+                        {opt}
+                      </button>
+                    ))}
+                    {b2GqSelected!==null && <div style={{ background:C.blueLight, borderRadius:10, padding:"8px 12px", fontSize:12, color:C.blue, marginTop:6 }}>💡 {currentB2Gq.exp}</div>}
+                  </div>
+                  {b2GqSelected!==null && (
+                    <button onClick={()=>{if(b2GqIndex+1>=B2_GRAMMAR_QUESTIONS.length){setB2GqDone(true);}else{setB2GqIndex(i=>i+1);setB2GqSelected(null);}}}
+                      style={{ padding:"11px 24px", background:C.blue, border:"none", borderRadius:10, color:"#fff", cursor:"pointer", fontWeight:700, fontSize:14 }}>
+                      {b2GqIndex+1>=B2_GRAMMAR_QUESTIONS.length?"Finish":"Next →"}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div style={{ textAlign:"center", padding:24 }}>
+                  <div style={{ fontSize:48 }}>{b2GqScore>=Math.round(B2_GRAMMAR_QUESTIONS.length*0.85)?"🏆":b2GqScore>=Math.round(B2_GRAMMAR_QUESTIONS.length*0.6)?"⭐":"📚"}</div>
+                  <div style={{ fontSize:28, fontWeight:700, color:C.blue, marginTop:8 }}>{b2GqScore}/{B2_GRAMMAR_QUESTIONS.length}</div>
+                  <div style={{ color:C.muted, marginTop:6 }}>{b2GqScore===B2_GRAMMAR_QUESTIONS.length?"Perfect! 완벽해요!":"화이팅! Keep it up!"}</div>
+                  <button onClick={()=>{
+                    setB2GqOrder(shuffle(Array.from({length:B2_GRAMMAR_QUESTIONS.length},(_,i)=>i)));
+                    setB2GqIndex(0);setB2GqSelected(null);setB2GqScore(0);setB2GqDone(false);
+                  }} style={{ marginTop:16, padding:"11px 24px", background:C.red, border:"none", borderRadius:10, color:"#fff", cursor:"pointer", fontWeight:700 }}>Try Again</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <style>{`
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: ${C.bg}; }
+        ::-webkit-scrollbar-thumb { background: ${C.border}; border-radius: 4px; }
+        input::placeholder { color: ${C.muted}; }
+      `}</style>
+    </div>
+  );
+}
+
+
+    // React 18 root
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(React.createElement(App));
+  </script>
+
+  <script>
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
