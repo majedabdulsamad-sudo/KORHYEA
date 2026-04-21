@@ -1,29 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#1A4F7A" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="KORHYEAN" />
-  <title>KORHYEAN — 나의 한국어 선생님</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%231A4F7A'/%3E%3Ctext x='90' y='120' font-size='90' text-anchor='middle'%3E🇰🇷%3C/text%3E%3C/svg%3E" />
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, "Segoe UI", sans-serif; background: #F4F5F7; overscroll-behavior: none; }
-    #root { min-height: 100vh; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useRef } = React;
-
+import { useState, useRef } from "react";
 
 const TABS = ["Home", "Flashcards", "B1", "B2", "Grammar", "Word", "Chat"];
 
@@ -164,7 +139,7 @@ const BASE_CARDS = {
 const REVERSE_CATS = new Set(["Numbers & Counters","Days","Colors","Adjectives","Conversations"]);
 
 // Example sentences for flashcards (keyed by Korean word)
-const FC_EXAMPLES = {
+const FC_EXAMPLES: Record<string,{kr:string,en:string}> = {
   "먹다":{kr:"저는 매일 아침에 밥을 먹어요.",en:"I eat rice every morning."},
   "마시다":{kr:"커피를 마시고 싶어요.",en:"I want to drink coffee."},
   "가다":{kr:"학교에 가요.",en:"I go to school."},
@@ -244,7 +219,7 @@ const FC_EXAMPLES = {
 // ── B2 Data ──────────────────────────────────────────────────────────────────
 const B2_SUBTABS = ["날씨 Weather","기분 Mood","안/지않다 Negation","시간 Time","날짜 Date","시간 입자 Time Particle","숫자 Numbers"];
 
-const B2_FLASHCARD_DECKS = {
+const B2_FLASHCARD_DECKS: Record<string,{kr:string,rom:string,en:string,ex?:{kr:string,en:string}}[]> = {
   "날씨 Weather": [
     {kr:"맑다",rom:"makda",en:"to be clear/sunny",ex:{kr:"오늘 날씨가 맑아요.",en:"The weather is clear today."}},
     {kr:"흐리다",rom:"heurida",en:"to be cloudy/overcast",ex:{kr:"오늘 하늘이 흐려요.",en:"The sky is overcast today."}},
@@ -363,7 +338,7 @@ const B2_GRAMMAR_QUESTIONS = [
 ];
 
 // B2 Flashcard sub-component
-function B2FlashCard({ card, onMastered, onAgain, showHint, onHint, isGotIt }) {
+function B2FlashCard({ card, onMastered, onAgain, showHint, onHint, isGotIt }: any) {
   const [revealed, setRevealed] = useState(false);
   return (
     <div>
@@ -649,7 +624,7 @@ const INITIAL_GOALS = [
 ];
 
 // B1 Flashcard sub-component
-function B1Card({ card, index, total, onMastered, onAgain }) {
+function B1Card({ card, index, total, onMastered, onAgain }: any) {
   const [revealed, setRevealed] = useState(false);
   const [showExercises, setShowExercises] = useState(false);
   return (
@@ -1168,7 +1143,7 @@ function NumbersDrill() {
 
   return null;
 }
-function DateTimeCard({ card }) {
+function DateTimeCard({ card }: any) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ background:"#fff", border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 16px", marginBottom:10, cursor:"pointer" }} onClick={()=>setOpen(x=>!x)}>
@@ -1188,7 +1163,7 @@ function DateTimeCard({ card }) {
   );
 }
 
-function App() {
+export default function App() {
   const [tab, setTab] = useState("Home");
   const [mode, setMode] = useState("casual");
   const [messages, setMessages] = useState([{ role:"assistant", text:"안녕하세요! (Hello!) I'm your Korean tutor. Let's start chatting! You can write in English or try some Korean — I'll help you along the way. 😊", feedback:null }]);
@@ -1207,7 +1182,7 @@ function App() {
   // Persistent global learned counter (never resets)
   const [globalLearned, setGlobalLearned] = useState(0);
   // Shuffle order per category
-  const [fcOrder, setFcOrder] = useState({});
+  const [fcOrder, setFcOrder] = useState<Record<string,number[]>>({});
   // Hide "Got it" cards globally
   const [hideGotIt, setHideGotIt] = useState(true);
   // Hint shown for current card
@@ -1217,7 +1192,7 @@ function App() {
   const [gqScore, setGqScore] = useState(0);
   const [gqDone, setGqDone] = useState(false);
   // Shuffled grammar questions
-  const [gqOrder, setGqOrder] = useState([]);
+  const [gqOrder, setGqOrder] = useState<number[]>([]);
   const [stats, setStats] = useState({ words:3, grammar:30, msgs:1 });
   const [journal, setJournal] = useState(["Session 1: Started learning Korean basics."]);
   const [goals, setGoals] = useState(INITIAL_GOALS);
@@ -1228,8 +1203,8 @@ function App() {
   // B2 state
   const [b2Sub, setB2Sub] = useState(B2_SUBTABS[0]);
   const [b2DeckIndex, setB2DeckIndex] = useState(0);
-  const [b2DeckOrder, setB2DeckOrder] = useState([]);
-  const [b2DeckMastered, setB2DeckMastered] = useState({});
+  const [b2DeckOrder, setB2DeckOrder] = useState<number[]>([]);
+  const [b2DeckMastered, setB2DeckMastered] = useState<Record<string,number[]>>({});
   const [b2DeckHint, setB2DeckHint] = useState(false);
   const [b2DateIndex, setB2DateIndex] = useState(0);
   const [b2VocabIndex, setB2VocabIndex] = useState(0);
@@ -1237,7 +1212,7 @@ function App() {
   const [b2GqSelected, setB2GqSelected] = useState(null);
   const [b2GqScore, setB2GqScore] = useState(0);
   const [b2GqDone, setB2GqDone] = useState(false);
-  const [b2GqOrder, setB2GqOrder] = useState([]);
+  const [b2GqOrder, setB2GqOrder] = useState<number[]>([]);
 
   const chatEndRef = useRef(null);
   const convHistory = useRef([]);
@@ -1245,7 +1220,7 @@ function App() {
   const profLabels = ["","Beginner","Elementary","Intermediate","Advanced","Fluent"];
 
   // Shuffle helper
-  const shuffle = (arr) => {
+  const shuffle = (arr: number[]) => {
     const a = [...arr];
     for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
     return a;
@@ -1894,17 +1869,3 @@ function App() {
     </div>
   );
 }
-
-    const container = document.getElementById('root');
-    const root = ReactDOM.createRoot(container);
-    root.render(React.createElement(App));
-  </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
-    }
-  </script>
-</body>
-</html>
