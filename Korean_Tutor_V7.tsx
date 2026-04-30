@@ -1,30 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-  <meta name="theme-color" content="#0F172A"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="KORHYEAN"/>
-  <title>KORHYEAN — 나의 한국어 선생님</title>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='36' fill='%230F172A'/%3E%3Ctext x='90' y='120' font-size='90' text-anchor='middle'%3E🇰🇷%3C/text%3E%3C/svg%3E"/>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    html,body{background:#0F172A;color:#F8FAFC}
-    body{font-family:-apple-system,"Segoe UI",sans-serif;overscroll-behavior:none}
-    #root{min-height:100vh}
-    a{color:inherit}
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useRef } = React;
+import { useState, useRef } from "react";
 
 const TABS = ["Home", "Flashcards", "B1", "B2", "Grammar", "Word", "Chat", "News", "Culture"];
 
@@ -166,7 +140,7 @@ const BASE_CARDS = {
 const REVERSE_CATS = new Set(["Numbers & Counters","Days","Colors","Adjectives","Conversations"]);
 
 // Example sentences for flashcards (keyed by Korean word)
-const FC_EXAMPLES = {
+const FC_EXAMPLES: Record<string,{kr:string,en:string}> = {
   "먹다":{kr:"저는 매일 아침에 밥을 먹어요.",en:"I eat rice every morning."},
   "마시다":{kr:"커피를 마시고 싶어요.",en:"I want to drink coffee."},
   "가다":{kr:"학교에 가요.",en:"I go to school."},
@@ -246,7 +220,7 @@ const FC_EXAMPLES = {
 // ── B2 Data ──────────────────────────────────────────────────────────────────
 const B2_SUBTABS = ["날씨 Weather","기분 Mood","안/지않다 Negation","시간 Time","날짜 Date","시간 입자 Time Particle","숫자 Numbers","동사 Verb Tenses"];
 
-const B2_FLASHCARD_DECKS = {
+const B2_FLASHCARD_DECKS: Record<string,{kr:string,rom:string,en:string,ex?:{kr:string,en:string}}[]> = {
   "날씨 Weather": [
     {kr:"맑다",rom:"makda",en:"to be clear/sunny",ex:{kr:"오늘 날씨가 맑아요.",en:"The weather is clear today."}},
     {kr:"흐리다",rom:"heurida",en:"to be cloudy/overcast",ex:{kr:"오늘 하늘이 흐려요.",en:"The sky is overcast today."}},
@@ -365,7 +339,7 @@ const B2_GRAMMAR_QUESTIONS = [
 ];
 
 // B2 Flashcard sub-component
-function B2FlashCard({ card, onMastered, onAgain, showHint, onHint, isGotIt }) {
+function B2FlashCard({ card, onMastered, onAgain, showHint, onHint, isGotIt }: any) {
   const [revealed, setRevealed] = useState(false);
   return (
     <div>
@@ -670,7 +644,7 @@ const INITIAL_GOALS = [
 ];
 
 // B1 Flashcard sub-component
-function B1Card({ card, index, total, onMastered, onAgain }) {
+function B1Card({ card, index, total, onMastered, onAgain }: any) {
   const [revealed, setRevealed] = useState(false);
   const [showExercises, setShowExercises] = useState(false);
   return (
@@ -696,7 +670,7 @@ function B1Card({ card, index, total, onMastered, onAgain }) {
                 </button>
                 {showExercises && (
                   <div style={{ marginTop:8, textAlign:"left" }}>
-                    {card.exercises.map((ex, i) => (
+                    {card.exercises.map((ex: string, i: number) => (
                       <div key={i} style={{ fontSize:13, color:C.textSub, marginBottom:4, padding:"4px 8px", background:C.light, borderRadius:6 }}>{ex}</div>
                     ))}
                   </div>
@@ -1191,7 +1165,7 @@ function NumbersDrill() {
 }
 // ── Verb Conjugation Data ─────────────────────────────────────────────────────
 // Each entry: dictionary form, english, then conjugated forms
-const VERB_CONJ = {
+const VERB_CONJ: Record<string,{rom:string,en:string,present:string,past:string,negative:string,imperative:string,note?:string}> = {
   "먹다": {rom:"meokda",en:"to eat",present:"먹어요",past:"먹었어요",negative:"안 먹어요 / 먹지 않아요",imperative:"드세요 / 먹어요",note:"먹 has dark vowel ㅓ → 어요. Honorific imperative: 드세요"},
   "마시다": {rom:"masida",en:"to drink",present:"마셔요",past:"마셨어요",negative:"안 마셔요 / 마시지 않아요",imperative:"마세요 / 마셔요",note:"마시 + 어요 → 마셔요 (vowel contraction)"},
   "가다": {rom:"gada",en:"to go",present:"가요",past:"갔어요",negative:"안 가요 / 가지 않아요",imperative:"가세요",note:"가 + 아요 → 가요 (bright vowel ㅏ). Past: 가 + 았어요 → 갔어요"},
@@ -1260,12 +1234,12 @@ const DAILY_ROUTINE_PHRASES = [
 ];
 
 // VerbDrill component — for each verb: meaning guess → then see all tenses
-function VerbDrill({ verbs }) {
-  const verbList = verbs.filter((v) => VERB_CONJ[v.kr]);
+function VerbDrill({ verbs }: any) {
+  const verbList = verbs.filter((v: any) => VERB_CONJ[v.kr]);
   const [idx, setIdx] = useState(0);
-  const [phase, setPhase] = useState("guess");
+  const [phase, setPhase] = useState<"guess"|"tenses">("guess");
   const [guessShown, setGuessShown] = useState(false);
-  const [tenseShown, setTenseShown] = useState>({});
+  const [tenseShown, setTenseShown] = useState<Record<string,boolean>>({});
 
   const card = verbList[idx];
   if (!card) return <div style={{color:C.textDim,padding:16}}>No conjugation data for this category yet.</div>;
@@ -1337,7 +1311,7 @@ function VerbDrill({ verbs }) {
 // 에서/에 Particle drill component
 function ParticleDrill() {
   const [idx, setIdx] = useState(0);
-  const [chosen, setChosen] = useState(null);
+  const [chosen, setChosen] = useState<string|null>(null);
   const [score, setScore] = useState({r:0,w:0});
   const [items] = useState(() => {
     const a=[...PARTICLE_DRILL]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a;
@@ -1382,7 +1356,7 @@ function ParticleDrill() {
 }
 
 // News card — collapsible, shows Korean translation
-function NewsCard({ item, index }) {
+function NewsCard({ item, index }: any) {
   const [open, setOpen] = useState(false);
   return (
     <div onClick={()=>setOpen(x=>!x)} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 14px", marginBottom:10, cursor:"pointer" }}>
@@ -1494,7 +1468,7 @@ function CultureCards() {
   );
 }
 
-function DateTimeCard({ card }) {
+function DateTimeCard({ card }: any) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:12, padding:"12px 16px", marginBottom:10, cursor:"pointer" }} onClick={()=>setOpen(x=>!x)}>
@@ -1514,7 +1488,7 @@ function DateTimeCard({ card }) {
   );
 }
 
-function App() {
+export default function App() {
   const [tab, setTab] = useState("Home");
   const [showSplash, setShowSplash] = useState(true);
   const [showProgress, setShowProgress] = useState(false);
@@ -1537,7 +1511,7 @@ function App() {
   // Persistent global learned counter (never resets)
   const [globalLearned, setGlobalLearned] = useState(0);
   // Shuffle order per category
-  const [fcOrder, setFcOrder] = useState>({});
+  const [fcOrder, setFcOrder] = useState<Record<string,number[]>>({});
   // Hide "Got it" cards globally
   const [hideGotIt, setHideGotIt] = useState(true);
   // Hint shown for current card
@@ -1548,7 +1522,7 @@ function App() {
   const [gqScore, setGqScore] = useState(0);
   const [gqDone, setGqDone] = useState(false);
   // Shuffled grammar questions
-  const [gqOrder, setGqOrder] = useState([]);
+  const [gqOrder, setGqOrder] = useState<number[]>([]);
   const [stats, setStats] = useState({ words:3, grammar:30, msgs:1 });
   const [journal, setJournal] = useState(["Session 1: Started learning Korean basics."]);
   const [goals, setGoals] = useState(INITIAL_GOALS);
@@ -1559,8 +1533,8 @@ function App() {
   // B2 state
   const [b2Sub, setB2Sub] = useState(B2_SUBTABS[0]);
   const [b2DeckIndex, setB2DeckIndex] = useState(0);
-  const [b2DeckOrder, setB2DeckOrder] = useState([]);
-  const [b2DeckMastered, setB2DeckMastered] = useState>({});
+  const [b2DeckOrder, setB2DeckOrder] = useState<number[]>([]);
+  const [b2DeckMastered, setB2DeckMastered] = useState<Record<string,number[]>>({});
   const [b2DeckHint, setB2DeckHint] = useState(false);
   const [b2DateIndex, setB2DateIndex] = useState(0);
   const [b2VocabIndex, setB2VocabIndex] = useState(0);
@@ -1568,7 +1542,7 @@ function App() {
   const [b2GqSelected, setB2GqSelected] = useState(null);
   const [b2GqScore, setB2GqScore] = useState(0);
   const [b2GqDone, setB2GqDone] = useState(false);
-  const [b2GqOrder, setB2GqOrder] = useState([]);
+  const [b2GqOrder, setB2GqOrder] = useState<number[]>([]);
 
   const chatEndRef = useRef(null);
   const convHistory = useRef([]);
@@ -1576,14 +1550,14 @@ function App() {
   const profLabels = ["","Beginner","Elementary","Intermediate","Advanced","Fluent"];
 
   // Shuffle helper
-  const shuffle = (arr) => {
+  const shuffle = (arr: number[]) => {
     const a = [...arr];
     for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
     return a;
   };
 
   // Get or create shuffle order for a category
-  const getOrder = (cat, len) => {
+  const getOrder = (cat: string, len: number) => {
     if (fcOrder[cat] && fcOrder[cat].length === len) return fcOrder[cat];
     const order = shuffle(Array.from({length:len},(_,i)=>i));
     setFcOrder(o=>({...o,[cat]:order}));
@@ -2348,15 +2322,3 @@ function App() {
     </div>
   );
 }
-
-    const container = document.getElementById('root');
-    const root = ReactDOM.createRoot(container);
-    root.render(React.createElement(App));
-  </script>
-  <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
-    }
-  </script>
-</body>
-</html>
