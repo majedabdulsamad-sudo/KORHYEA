@@ -2,7 +2,6 @@
   "name": "korhyean",
   "private": true,
   "version": "1.0.0",
-  "description": "KORHYEAN — Korean Language Tutor App",
   "type": "module",
   "scripts": {
     "dev": "vite",
